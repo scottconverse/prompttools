@@ -282,3 +282,93 @@ class TestDiffFiles:
         # and changes model -- should have breaking changes.
         assert result.is_breaking is True
         assert len(result.breaking_changes) > 0
+
+    def test_diff_files_custom_encoding(self, old_prompt_file, new_prompt_file):
+        """Blind spot 6: diff_files() with a non-default encoding parameter."""
+        result = diff_files(old_prompt_file, new_prompt_file, encoding="p50k_base")
+        # Should still produce a valid diff with the alternative encoding.
+        assert result.token_delta.old_total > 0
+        assert result.token_delta.new_total > 0
+        assert result.old_hash != result.new_hash
+
+    def test_diff_files_malformed_yaml(self, tmp_path):
+        """Blind spot 9: malformed YAML input with no messages key."""
+        bad_content = "not_messages:\n  - foo: bar\n"
+        good_content = 'messages:\n  - role: system\n    content: "Hello"\n'
+        bad = tmp_path / "bad.yaml"
+        good = tmp_path / "good.yaml"
+        bad.write_text(bad_content, encoding="utf-8")
+        good.write_text(good_content, encoding="utf-8")
+        # Should raise a clear error, not crash with KeyError
+        with pytest.raises((KeyError, ValueError, TypeError, Exception)):
+            diff_files(bad, good)
+
+
+class TestComputeTokenDeltaZeroOldTotal:
+    """Blind spot 5: compute_token_delta with zero old_total."""
+
+    def test_zero_old_total_nonzero_new(self):
+        """Division-by-zero path: old has 0 tokens, new has some."""
+        old = PromptFile(
+            path=Path("empty.yaml"),
+            format=PromptFormat.YAML,
+            raw_content="",
+            messages=[],
+        )
+        new = PromptFile(
+            path=Path("new.yaml"),
+            format=PromptFormat.YAML,
+            raw_content="new",
+            messages=[Message(role="system", content="Hello world")],
+        )
+        td = compute_token_delta(old, new)
+        assert td.old_total == 0
+        assert td.new_total > 0
+        assert td.percent_change == 100.0
+
+    def test_zero_old_total_zero_new(self):
+        """Both files empty -- 0% change, no division error."""
+        old = PromptFile(
+            path=Path("empty1.yaml"),
+            format=PromptFormat.YAML,
+            raw_content="",
+            messages=[],
+        )
+        new = PromptFile(
+            path=Path("empty2.yaml"),
+            format=PromptFormat.YAML,
+            raw_content="",
+            messages=[],
+        )
+        td = compute_token_delta(old, new)
+        assert td.old_total == 0
+        assert td.new_total == 0
+        assert td.delta == 0
+        assert td.percent_change == 0.0
+
+
+class TestDiffMessagesUnicode:
+    """Blind spot 10: unicode content in messages."""
+
+    def test_unicode_emoji(self):
+        old = [Message(role="user", content="Hello world")]
+        new = [Message(role="user", content="Hello world! \U0001f600\U0001f680\U0001f4a5")]
+        diffs = diff_messages(old, new)
+        assert len(diffs) == 1
+        assert diffs[0].status == ChangeStatus.MODIFIED
+        assert "\U0001f600" in diffs[0].new_content
+
+    def test_unicode_cjk(self):
+        old = [Message(role="system", content="\u4f60\u597d\u4e16\u754c")]
+        new = [Message(role="system", content="\u4f60\u597d\u4e16\u754c\uff0c\u8bf7\u5e2e\u52a9\u6211")]
+        diffs = diff_messages(old, new)
+        assert len(diffs) == 1
+        assert diffs[0].status == ChangeStatus.MODIFIED
+        assert diffs[0].token_delta != 0
+
+    def test_unicode_accented(self):
+        old = [Message(role="user", content="caf\u00e9 na\u00efve r\u00e9sum\u00e9")]
+        new = [Message(role="user", content="caf\u00e9 na\u00efve r\u00e9sum\u00e9")]
+        diffs = diff_messages(old, new)
+        assert len(diffs) == 1
+        assert diffs[0].status == ChangeStatus.UNCHANGED

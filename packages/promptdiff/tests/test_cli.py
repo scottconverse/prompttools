@@ -116,7 +116,7 @@ class TestCliDiff:
             encoding="utf-8",
         )
         result = runner.invoke(app, [str(fake), str(real)])
-        assert result.exit_code != 0
+        assert result.exit_code == 2
 
     def test_no_args_shows_help(self):
         result = runner.invoke(app, [])
@@ -155,3 +155,28 @@ class TestCliJsonOutput:
         parsed = json.loads(result.output)
         meta_keys = {m["key"] for m in parsed["metadata_diffs"]}
         assert "model" in meta_keys
+
+
+class TestCliEncodingFlag:
+    """Blind spot 8: CLI --encoding flag passthrough."""
+
+    def test_encoding_cl100k_base(self, old_file, new_file):
+        result = runner.invoke(
+            app, [str(old_file), str(new_file), "--encoding", "cl100k_base"]
+        )
+        assert result.exit_code == 0
+
+    def test_encoding_p50k_base(self, old_file, new_file):
+        result = runner.invoke(
+            app, [str(old_file), str(new_file), "--encoding", "p50k_base"]
+        )
+        assert result.exit_code == 0
+
+    def test_encoding_with_json_output(self, old_file, new_file):
+        result = runner.invoke(
+            app,
+            [str(old_file), str(new_file), "--encoding", "p50k_base", "--format", "json"],
+        )
+        assert result.exit_code == 0
+        parsed = json.loads(result.output)
+        assert parsed["token_delta"]["old_total"] > 0

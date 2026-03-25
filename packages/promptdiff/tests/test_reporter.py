@@ -28,8 +28,12 @@ class TestFormatText:
 
     def test_contains_hashes(self, sample_diff):
         output = format_text(sample_diff)
-        assert "aaa111" in output
-        assert "bbb222" in output
+        # Hashes are 18 chars but reporter truncates to [:12]
+        assert "aaa111bbb222" in output
+        assert "ddd444eee555" in output
+        # Full 18-char hash should NOT appear (truncation exercised)
+        assert "aaa111bbb222ccc333" not in output
+        assert "ddd444eee555fff666" not in output
 
     def test_shows_breaking_changes(self, sample_diff):
         output = format_text(sample_diff)
@@ -178,3 +182,51 @@ class TestFormatMarkdown:
         output = format_markdown(sample_diff)
         assert "**HIGH**" in output
         assert "MEDIUM" in output
+
+
+class TestFormattersMetadataOnly:
+    """Blind spot 7: formatters with only metadata changes (no messages or variables)."""
+
+    @pytest.fixture
+    def metadata_only_diff(self):
+        return PromptDiff(
+            file_path=Path("meta_only.yaml"),
+            old_hash="aaaa1111bbbb2222",
+            new_hash="cccc3333dddd4444",
+            message_diffs=[],
+            variable_diffs=[],
+            metadata_diffs=[
+                MetadataDiff(
+                    key="temperature",
+                    status=ChangeStatus.MODIFIED,
+                    old_value=0.7,
+                    new_value=0.9,
+                ),
+            ],
+            token_delta=TokenDelta(
+                old_total=50, new_total=50, delta=0, percent_change=0.0
+            ),
+            breaking_changes=[],
+        )
+
+    def test_format_text_metadata_only(self, metadata_only_diff):
+        output = format_text(metadata_only_diff)
+        assert "meta_only.yaml" in output
+        assert "temperature" in output
+        assert "No breaking changes" in output
+
+    def test_format_json_metadata_only(self, metadata_only_diff):
+        output = format_json(metadata_only_diff)
+        parsed = json.loads(output)
+        assert len(parsed["message_diffs"]) == 0
+        assert len(parsed["variable_diffs"]) == 0
+        assert len(parsed["metadata_diffs"]) == 1
+        assert parsed["metadata_diffs"][0]["key"] == "temperature"
+        assert parsed["is_breaking"] is False
+
+    def test_format_markdown_metadata_only(self, metadata_only_diff):
+        output = format_markdown(metadata_only_diff)
+        assert "meta_only.yaml" in output
+        assert "### Metadata" in output
+        assert "temperature" in output
+        assert "No breaking changes" in output

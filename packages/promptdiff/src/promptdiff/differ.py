@@ -169,7 +169,10 @@ def _diff_single_message(
         )
 
     # Both exist -- compare content.
-    assert old_msg is not None and new_msg is not None
+    if old_msg is None or new_msg is None:
+        raise ValueError(
+            "Expected both old_msg and new_msg to be non-None at this point"
+        )
 
     if old_msg.content == new_msg.content:
         return MessageDiff(

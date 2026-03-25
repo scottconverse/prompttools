@@ -105,8 +105,8 @@ def sample_diff():
     """A pre-built PromptDiff for reporter tests."""
     return PromptDiff(
         file_path=Path("test_prompt.yaml"),
-        old_hash="aaa111",
-        new_hash="bbb222",
+        old_hash="aaa111bbb222ccc333",
+        new_hash="ddd444eee555fff666",
         message_diffs=[
             MessageDiff(
                 status=ChangeStatus.MODIFIED,

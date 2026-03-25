@@ -14,7 +14,7 @@ authors = [
 ]
 keywords = ["llm", "prompt", "diff", "semantic", "ai", "breaking-changes"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
@@ -34,9 +34,9 @@ dependencies = [
 promptdiff = "promptdiff.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/scottconverse/promptdiff"
-Repository = "https://github.com/scottconverse/promptdiff"
-Issues = "https://github.com/scottconverse/promptdiff/issues"
+Homepage = "https://github.com/scottconverse/prompttools"
+Repository = "https://github.com/scottconverse/prompttools"
+Issues = "https://github.com/scottconverse/prompttools/issues"
 
 [project.optional-dependencies]
 dev = [

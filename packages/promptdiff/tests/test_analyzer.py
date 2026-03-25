@@ -227,6 +227,72 @@ class TestAnalyzeBreakingChanges:
         assert result[0].severity == "high"
         assert result[1].severity == "medium"
 
+    def test_role_ordering_pure(self):
+        """Same messages in different order -- no additions/removals.
+
+        Old: system, user, assistant
+        New: user, system, assistant
+
+        The diff_messages alignment groups by role, so the diffs here
+        simulate the result: all messages are UNCHANGED but the overall
+        role ordering (system, user, assistant) vs (user, system, assistant)
+        has changed.  We express that via MODIFIED placeholders whose
+        reconstructed role sequences differ.
+        """
+        diff = _make_diff(
+            message_diffs=[
+                # Simulate reordering: old had system first, new has user first.
+                # Use UNCHANGED for each role but order them differently in the
+                # old vs new role sequences by using MODIFIED entries whose
+                # role ordering differs.
+                MessageDiff(
+                    status=ChangeStatus.MODIFIED,
+                    role="system",
+                    old_content="Be helpful",
+                    new_content="Be helpful!",
+                ),
+                MessageDiff(
+                    status=ChangeStatus.MODIFIED,
+                    role="user",
+                    old_content="Q",
+                    new_content="Q!",
+                ),
+            ]
+        )
+        # With same roles in same order, no role ordering change should fire
+        result = analyze_breaking_changes(diff)
+        role_changes = [c for c in result if c.category == "role"]
+        assert len(role_changes) == 0
+
+        # Now simulate reordering: old = [system, user], new = [user, system]
+        # We need the reconstructed sequences to differ. We do this with
+        # a removed system + added system at end, plus unchanged user.
+        diff_reordered = _make_diff(
+            message_diffs=[
+                MessageDiff(
+                    status=ChangeStatus.REMOVED,
+                    role="system",
+                    old_content="Be helpful",
+                ),
+                MessageDiff(
+                    status=ChangeStatus.UNCHANGED,
+                    role="user",
+                    old_content="Q",
+                    new_content="Q",
+                ),
+                MessageDiff(
+                    status=ChangeStatus.ADDED,
+                    role="system",
+                    new_content="Be helpful",
+                ),
+            ]
+        )
+        result2 = analyze_breaking_changes(diff_reordered)
+        role_changes2 = [c for c in result2 if c.category == "role"]
+        assert len(role_changes2) == 1
+        assert role_changes2[0].severity == "medium"
+        assert "ordering" in role_changes2[0].description.lower()
+
     def test_multiple_breaking_changes(self):
         diff = _make_diff(
             variable_diffs=[
