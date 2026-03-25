@@ -1,0 +1,63 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "promptdiff-ai"
+version = "1.0.0"
+description = "Semantic diff for LLM prompt changes"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+authors = [
+    {name = "Scott Converse"},
+]
+keywords = ["llm", "prompt", "diff", "semantic", "ai", "breaking-changes"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = [
+    "prompttools-core-ai>=1.0,<2.0",
+    "typer[all]>=0.12",
+    "rich>=13.0",
+]
+
+[project.scripts]
+promptdiff = "promptdiff.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/scottconverse/promptdiff"
+Repository = "https://github.com/scottconverse/promptdiff"
+Issues = "https://github.com/scottconverse/promptdiff/issues"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov",
+    "ruff",
+    "mypy",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/promptdiff"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true

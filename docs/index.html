@@ -83,7 +83,7 @@
 <header class="hero">
   <h1><span class="accent">prompt</span>tools</h1>
   <p class="tagline">Developer Tools for LLM Prompts</p>
-  <p class="subtitle">Lint, format, test, and estimate costs for your prompt files.</p>
+  <p class="subtitle">Lint, format, test, diff, version, and estimate costs for your prompt files.</p>
   <a href="#quickstart" class="cta">Get Started</a>
 </header>
 
@@ -91,7 +91,7 @@
 <section id="tools">
   <div class="container">
     <h2 class="section-title">Tools</h2>
-    <p class="section-desc">Five focused packages that work standalone or together.</p>
+    <p class="section-desc">Seven focused packages that work standalone or together.</p>
     <div class="card-grid">
       <div class="card">
         <h3>promptlint</h3>
@@ -118,6 +118,18 @@
         <span class="badge b-pink">budget enforcement</span>
       </div>
       <div class="card">
+        <h3>promptdiff</h3>
+        <p>Semantic diff for prompt changes. Shows message-level diffs, variable impact, token deltas, and breaking change detection.</p>
+        <span class="badge b-orange">breaking changes</span>
+        <span class="badge b-green">CI gate</span>
+      </div>
+      <div class="card">
+        <h3>promptvault</h3>
+        <p>Version control and registry for prompt assets. Semantic versioning, dependency resolution, lockfiles, and a searchable catalog.</p>
+        <span class="badge b-purple">semver</span>
+        <span class="badge b-pink">lockfiles</span>
+      </div>
+      <div class="card">
         <h3>prompttools-core</h3>
         <p>Shared foundation providing prompt parsing, tokenization, and model profiles used by all tools.</p>
         <span class="badge b-purple">parsing</span>
@@ -136,7 +148,7 @@
 
     <div class="qs-group">
       <h3>Install</h3>
-      <pre><code><span class="cmd">pip</span> <span class="kw">install</span> <span class="str">promptlint-ai promptfmt-ai prompttest-ai promptcost-ai</span></code></pre>
+      <pre><code><span class="cmd">pip</span> <span class="kw">install</span> <span class="str">promptlint-ai promptfmt-ai prompttest-ai promptcost-ai promptdiff-ai promptvault-ai</span></code></pre>
     </div>
 
     <div class="qs-group">
@@ -173,6 +185,25 @@
 
 <span class="cmt"># Enforce a budget ceiling in CI</span>
 <span class="cmd">npx</span> <span class="str">promptcost</span> <span class="flag">--max-cost 5.00</span> <span class="flag">./prompts/</span></code></pre>
+    </div>
+
+    <div class="qs-group">
+      <h3>promptdiff</h3>
+      <pre><code><span class="cmt"># Compare two prompt files</span>
+<span class="cmd">promptdiff</span> <span class="flag">old.yaml</span> <span class="flag">new.yaml</span>
+
+<span class="cmt"># CI gate: exit 1 on breaking changes</span>
+<span class="cmd">promptdiff</span> <span class="flag">old.yaml</span> <span class="flag">new.yaml</span> <span class="flag">--exit-on-breaking</span></code></pre>
+    </div>
+
+    <div class="qs-group">
+      <h3>promptvault</h3>
+      <pre><code><span class="cmt"># Initialize a prompt package</span>
+<span class="cmd">promptvault</span> <span class="str">init</span> <span class="flag">--name @my-org/my-prompts</span>
+
+<span class="cmt"># Publish and install</span>
+<span class="cmd">promptvault</span> <span class="str">publish</span>
+<span class="cmd">promptvault</span> <span class="str">install</span></code></pre>
     </div>
   </div>
 </section>

@@ -11,7 +11,7 @@ Lint, format, test, and estimate costs for your LLM prompt files.
 
 ## Overview
 
-**prompttools** is a monorepo containing five developer tools that treat LLM prompts as first-class code artifacts. Each tool can be installed and used independently, but they share a common foundation through `prompttools-core`.
+**prompttools** is a monorepo containing seven developer tools that treat LLM prompts as first-class code artifacts. Each tool can be installed and used independently, but they share a common foundation through `prompttools-core`.
 
 | Package | Version | Description |
 |---------|---------|-------------|
@@ -20,6 +20,8 @@ Lint, format, test, and estimate costs for your LLM prompt files.
 | [promptfmt](packages/promptfmt/) | 1.0.0 | Auto-formatter for prompt files (whitespace, delimiters, variables, wrapping, structure) |
 | [promptcost](packages/promptcost/) | 1.0.0 | Token cost estimation, model comparison, volume projections, and budget enforcement |
 | [prompttest](packages/prompttest/) | 1.0.0 | Test framework for prompts with 15 assertion types and CI-ready output formats |
+| [promptdiff](packages/promptdiff/) | 1.0.0 | Semantic diff for prompt changes — message-level diffs, variable impact, token deltas, breaking change detection |
+| [promptvault](packages/promptvault/) | 1.0.0 | Version control and registry for prompt assets — semantic versioning, dependency resolution, lockfiles, searchable catalog |
 
 ## Installation
 
@@ -31,6 +33,8 @@ pip install promptfmt-ai
 pip install promptcost-ai
 pip install prompttest-ai
 pip install promptlint-ai
+pip install promptdiff-ai
+pip install promptvault-ai
 ```
 
 For development on the monorepo:
@@ -41,6 +45,8 @@ pip install -e packages/promptfmt[dev]
 pip install -e packages/promptcost[dev]
 pip install -e packages/prompttest[dev]
 pip install -e packages/promptlint[dev]
+pip install -e packages/promptdiff[dev]
+pip install -e packages/promptvault[dev]
 ```
 
 **Requirements:** Python 3.9+
@@ -101,6 +107,35 @@ prompttest run tests/
 
 # Output JUnit XML for CI
 prompttest run tests/ --format junit
+```
+
+### Diff prompt changes
+
+```bash
+# Compare two prompt files
+promptdiff old_prompt.yaml new_prompt.yaml
+
+# JSON output for CI pipelines
+promptdiff old.yaml new.yaml --format json
+
+# Exit with code 1 if breaking changes are found (CI gate)
+promptdiff old.yaml new.yaml --exit-on-breaking
+```
+
+### Manage prompt packages
+
+```bash
+# Initialize a prompt package
+promptvault init --name @my-org/my-prompts --author "Your Name"
+
+# Publish to local registry
+promptvault publish
+
+# Install dependencies and generate lockfile
+promptvault install
+
+# Search the registry
+promptvault search greeting
 ```
 
 Example test file (`test_greeting.yaml`):
@@ -185,6 +220,8 @@ Each package has its own detailed README:
 - [promptfmt README](packages/promptfmt/README.md) -- Auto-formatter CLI and rules
 - [promptcost README](packages/promptcost/README.md) -- Cost estimation, comparison, budgets
 - [prompttest README](packages/prompttest/README.md) -- Test framework, assertion types, reporters
+- [promptdiff README](packages/promptdiff/README.md) -- Semantic diff, breaking change detection, CI integration
+- [promptvault README](packages/promptvault/README.md) -- Package registry, versioning, dependency resolution
 
 See [README-full.md](README-full.md) for comprehensive documentation combining all packages.
 

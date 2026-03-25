@@ -1,8 +1,0 @@
-Rename all packages to -ai suffix for PyPI
-
-PyPI names: prompttools-core-ai, promptlint-ai, promptfmt-ai,
-promptcost-ai, prompttest-ai. Import names unchanged.
-Updated all pyproject.toml deps, docs, landing page, CI, terms.
-521 tests passing.
-
-Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>

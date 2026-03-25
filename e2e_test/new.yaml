@@ -1,0 +1,5 @@
+messages: 
+  - role: system 
+    content: You are a research analyst. Always cite sources. 
+  - role: user 
+    content: Research {{topic}} at {{depth}} depth. 
