@@ -8,10 +8,10 @@ from __future__ import annotations
 import json
 from xml.etree.ElementTree import Element, SubElement, tostring
 
-from prompttest.models import AssertionResult, TestReport, TestStatus
+from prompttest.models import AssertionResult, PromptTestReport, PromptTestStatus
 
 
-def format_text(report: TestReport) -> str:
+def format_text(report: PromptTestReport) -> str:
     """Format a test report as Rich-compatible colored terminal output.
 
     Parameters
@@ -83,7 +83,7 @@ def format_text(report: TestReport) -> str:
     return "\n".join(lines)
 
 
-def format_json(report: TestReport) -> str:
+def format_json(report: PromptTestReport) -> str:
     """Format a test report as JSON.
 
     Parameters
@@ -108,7 +108,7 @@ def format_json(report: TestReport) -> str:
     return json.dumps(data, indent=2, default=str)
 
 
-def format_junit(report: TestReport) -> str:
+def format_junit(report: PromptTestReport) -> str:
     """Format a test report as JUnit XML for CI integration.
 
     Parameters

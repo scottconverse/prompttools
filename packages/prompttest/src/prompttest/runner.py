@@ -19,15 +19,15 @@ from prompttest.assertions import run_assertion
 from prompttest.models import (
     AssertionResult,
     AssertionType,
-    TestCase,
-    TestReport,
-    TestStatus,
-    TestSuite,
+    PromptTestCase,
+    PromptTestReport,
+    PromptTestStatus,
+    PromptTestSuite,
 )
 
 
-def load_test_suite(path: Path) -> TestSuite:
-    """Parse a YAML test file into a TestSuite.
+def load_test_suite(path: Path) -> PromptTestSuite:
+    """Parse a YAML test file into a PromptTestSuite.
 
     Parameters
     ----------
@@ -36,7 +36,7 @@ def load_test_suite(path: Path) -> TestSuite:
 
     Returns
     -------
-    TestSuite
+    PromptTestSuite
 
     Raises
     ------
@@ -74,19 +74,19 @@ def load_test_suite(path: Path) -> TestSuite:
     if not isinstance(tests_raw, list):
         raise ValueError(f"'tests' in {path} must be a list")
 
-    test_cases: list[TestCase] = []
+    test_cases: list[PromptTestCase] = []
     for entry in tests_raw:
         if not isinstance(entry, dict):
             raise ValueError(f"Each test in {path} must be a mapping, got: {type(entry)}")
         try:
-            tc = TestCase.model_validate(entry)
+            tc = PromptTestCase.model_validate(entry)
             test_cases.append(tc)
         except Exception as exc:
             raise ValueError(
                 f"Invalid test case in {path}: {entry.get('name', '???')}: {exc}"
             ) from exc
 
-    return TestSuite(
+    return PromptTestSuite(
         name=suite_name,
         prompt_path=prompt_path,
         model=suite_model,
@@ -95,7 +95,7 @@ def load_test_suite(path: Path) -> TestSuite:
 
 
 def run_test_suite(
-    suite: TestSuite,
+    suite: PromptTestSuite,
     fail_fast: bool = False,
     model_override: Optional[str] = None,
 ) -> list[AssertionResult]:
@@ -122,7 +122,7 @@ def run_test_suite(
         return [
             AssertionResult(
                 test_name=tc.name,
-                status=TestStatus.ERROR,
+                status=PromptTestStatus.ERROR,
                 assert_type=tc.assert_type,
                 message=f"Failed to parse prompt file: {exc}",
             )
@@ -136,13 +136,13 @@ def run_test_suite(
         result = run_assertion(prompt_file, tc, effective_model)
         results.append(result)
 
-        if fail_fast and result.status == TestStatus.FAILED:
+        if fail_fast and result.status == PromptTestStatus.FAILED:
             # Mark remaining tests as skipped
             for remaining_tc in suite.tests[len(results):]:
                 results.append(
                     AssertionResult(
                         test_name=remaining_tc.name,
-                        status=TestStatus.SKIPPED,
+                        status=PromptTestStatus.SKIPPED,
                         assert_type=remaining_tc.assert_type,
                         message="Skipped due to --fail-fast",
                     )
@@ -153,10 +153,10 @@ def run_test_suite(
 
 
 def _build_report(
-    suite_results: list[tuple[TestSuite, list[AssertionResult]]],
+    suite_results: list[tuple[PromptTestSuite, list[AssertionResult]]],
     total_duration_ms: float,
-) -> TestReport:
-    """Build a TestReport from suite results."""
+) -> PromptTestReport:
+    """Build a PromptTestReport from suite results."""
     suites_data: list[dict] = []
     total = passed = failed = errors = skipped = 0
 
@@ -170,16 +170,16 @@ def _build_report(
 
         for r in results:
             total += 1
-            if r.status == TestStatus.PASSED:
+            if r.status == PromptTestStatus.PASSED:
                 passed += 1
-            elif r.status == TestStatus.FAILED:
+            elif r.status == PromptTestStatus.FAILED:
                 failed += 1
-            elif r.status == TestStatus.ERROR:
+            elif r.status == PromptTestStatus.ERROR:
                 errors += 1
-            elif r.status == TestStatus.SKIPPED:
+            elif r.status == PromptTestStatus.SKIPPED:
                 skipped += 1
 
-    return TestReport(
+    return PromptTestReport(
         suites=suites_data,
         total=total,
         passed=passed,
@@ -194,7 +194,7 @@ def run_test_file(
     path: Path,
     fail_fast: bool = False,
     model_override: Optional[str] = None,
-) -> TestReport:
+) -> PromptTestReport:
     """Load and run a single test file.
 
     Parameters
@@ -208,7 +208,7 @@ def run_test_file(
 
     Returns
     -------
-    TestReport
+    PromptTestReport
     """
     start = time.perf_counter()
     suite = load_test_suite(path)
@@ -262,7 +262,7 @@ def run_test_directory(
     fail_fast: bool = False,
     pattern: str = "test_*.yaml",
     model_override: Optional[str] = None,
-) -> TestReport:
+) -> PromptTestReport:
     """Discover and run all test files in a directory.
 
     Parameters
@@ -278,26 +278,26 @@ def run_test_directory(
 
     Returns
     -------
-    TestReport
+    PromptTestReport
     """
     start = time.perf_counter()
 
     test_files = discover_test_files(path, pattern)
-    suite_results: list[tuple[TestSuite, list[AssertionResult]]] = []
+    suite_results: list[tuple[PromptTestSuite, list[AssertionResult]]] = []
 
     for test_file in test_files:
         try:
             suite = load_test_suite(test_file)
         except (FileNotFoundError, ValueError) as exc:
             # Create a synthetic error suite
-            error_suite = TestSuite(
+            error_suite = PromptTestSuite(
                 name=test_file.stem,
                 prompt_path=Path("unknown"),
                 tests=[],
             )
             error_result = AssertionResult(
                 test_name=f"load:{test_file.name}",
-                status=TestStatus.ERROR,
+                status=PromptTestStatus.ERROR,
                 assert_type=AssertionType.VALID_FORMAT,
                 message=f"Failed to load test file: {exc}",
             )

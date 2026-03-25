@@ -33,7 +33,7 @@ class AssertionType(str, Enum):
     CONTENT_HASH = "content_hash"
 
 
-class TestStatus(str, Enum):
+class PromptTestStatus(str, Enum):
     """Outcome of a single test case."""
 
     PASSED = "passed"
@@ -42,7 +42,7 @@ class TestStatus(str, Enum):
     SKIPPED = "skipped"
 
 
-class TestCase(BaseModel):
+class PromptTestCase(BaseModel):
     """A single test assertion within a test suite.
 
     Parsed from a YAML test file entry. The ``assert`` field maps to
@@ -70,7 +70,7 @@ class TestCase(BaseModel):
     skip_reason: Optional[str] = None
 
     @model_validator(mode="after")
-    def _validate_bounds(self) -> "TestCase":
+    def _validate_bounds(self) -> "PromptTestCase":
         """Ensure max/min/ratio_max values are positive when provided."""
         if self.max is not None and self.max < 0:
             raise ValueError(f"'max' must be non-negative, got {self.max}")
@@ -85,7 +85,7 @@ class AssertionResult(BaseModel):
     """Result of running a single test assertion."""
 
     test_name: str
-    status: TestStatus
+    status: PromptTestStatus
     assert_type: AssertionType
     message: str
     expected: Optional[Any] = None
@@ -93,7 +93,7 @@ class AssertionResult(BaseModel):
     duration_ms: float = 0.0
 
 
-class TestSuite(BaseModel):
+class PromptTestSuite(BaseModel):
     """A collection of test cases targeting a single prompt file.
 
     Parsed from a YAML test file.
@@ -102,10 +102,10 @@ class TestSuite(BaseModel):
     name: str
     prompt_path: Path
     model: Optional[str] = None
-    tests: list[TestCase]
+    tests: list[PromptTestCase]
 
 
-class TestReport(BaseModel):
+class PromptTestReport(BaseModel):
     """Aggregated results from running one or more test suites."""
 
     suites: list[dict] = Field(default_factory=list)

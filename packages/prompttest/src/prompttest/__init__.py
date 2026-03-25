@@ -2,16 +2,16 @@
 
 Public API exports for convenience imports::
 
-    from prompttest import TestCase, TestSuite, TestReport, run_test_file
+    from prompttest import PromptTestCase, PromptTestSuite, PromptTestReport, run_test_file
 """
 
 from prompttest.models import (
     AssertionResult,
     AssertionType,
-    TestCase,
-    TestReport,
-    TestStatus,
-    TestSuite,
+    PromptTestCase,
+    PromptTestReport,
+    PromptTestStatus,
+    PromptTestSuite,
 )
 from prompttest.assertions import run_assertion
 from prompttest.runner import (
@@ -29,10 +29,10 @@ __all__ = [
     # Models
     "AssertionResult",
     "AssertionType",
-    "TestCase",
-    "TestReport",
-    "TestStatus",
-    "TestSuite",
+    "PromptTestCase",
+    "PromptTestReport",
+    "PromptTestStatus",
+    "PromptTestSuite",
     # Assertions
     "run_assertion",
     # Runner

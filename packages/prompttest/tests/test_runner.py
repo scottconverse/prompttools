@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from prompttest.models import AssertionType, TestStatus
+from prompttest.models import AssertionType, PromptTestStatus
 from prompttest.runner import (
     discover_test_files,
     load_test_suite,
@@ -79,7 +79,7 @@ class TestRunTestSuite:
         assert len(results) == 3
         # has_role: system should pass, valid_format should pass, contains should pass
         for r in results:
-            assert r.status == TestStatus.PASSED
+            assert r.status == PromptTestStatus.PASSED
 
     def test_run_missing_prompt(self, tmp_path: Path) -> None:
         """When the prompt file doesn't exist, all tests should error."""
@@ -98,7 +98,7 @@ class TestRunTestSuite:
         suite = load_test_suite(test_file)
         results = run_test_suite(suite)
         assert len(results) == 2
-        assert all(r.status == TestStatus.ERROR for r in results)
+        assert all(r.status == PromptTestStatus.ERROR for r in results)
 
     def test_fail_fast(self, tmp_path: Path) -> None:
         prompt = tmp_path / "p.yaml"
@@ -123,9 +123,9 @@ class TestRunTestSuite:
         suite = load_test_suite(test_file)
         results = run_test_suite(suite, fail_fast=True)
         assert len(results) == 3
-        assert results[0].status == TestStatus.FAILED
-        assert results[1].status == TestStatus.SKIPPED
-        assert results[2].status == TestStatus.SKIPPED
+        assert results[0].status == PromptTestStatus.FAILED
+        assert results[1].status == PromptTestStatus.SKIPPED
+        assert results[2].status == PromptTestStatus.SKIPPED
 
 
 class TestDiscoverTestFiles:

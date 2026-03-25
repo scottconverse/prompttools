@@ -24,8 +24,11 @@ _PII_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
 # PL061 API key patterns
 # ---------------------------------------------------------------------------
 _API_KEY_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
+    ("Anthropic key", re.compile(r"\bsk-ant-[a-zA-Z0-9_-]{20,}\b")),
     ("OpenAI key", re.compile(r"\bsk-[a-zA-Z0-9]{20,}\b")),
+    ("Groq key", re.compile(r"\bgsk_[a-zA-Z0-9]{20,}\b")),
     ("GitHub token", re.compile(r"\bghp_[a-zA-Z0-9]{36}\b")),
+    ("GitLab token", re.compile(r"\bglpat-[a-zA-Z0-9_-]{20,}\b")),
     ("Bearer token", re.compile(r"\bBearer [a-zA-Z0-9._-]{20,}\b")),
     ("Generic key", re.compile(r"\bkey-[a-zA-Z0-9]{32,}\b")),
     ("AWS key", re.compile(r"\bAKIA[A-Z0-9]{16}\b")),

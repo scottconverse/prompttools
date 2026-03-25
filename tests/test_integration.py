@@ -22,7 +22,7 @@ from prompttools_core.parser import parse_stdin
 from promptfmt import FmtConfig, format_content, format_file, is_equivalent
 from promptcost import estimate_file
 from prompttest import (
-    TestStatus,
+    PromptTestStatus,
     load_test_suite,
     run_test_file,
     run_test_suite,

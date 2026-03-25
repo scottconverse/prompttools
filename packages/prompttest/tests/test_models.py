@@ -9,10 +9,10 @@ import pytest
 from prompttest.models import (
     AssertionResult,
     AssertionType,
-    TestCase,
-    TestReport,
-    TestStatus,
-    TestSuite,
+    PromptTestCase,
+    PromptTestReport,
+    PromptTestStatus,
+    PromptTestSuite,
 )
 
 
@@ -36,23 +36,23 @@ class TestAssertionType:
 
 
 class TestTestStatus:
-    """Tests for the TestStatus enum."""
+    """Tests for the PromptTestStatus enum."""
 
     def test_all_statuses(self) -> None:
-        assert set(TestStatus) == {
-            TestStatus.PASSED,
-            TestStatus.FAILED,
-            TestStatus.ERROR,
-            TestStatus.SKIPPED,
+        assert set(PromptTestStatus) == {
+            PromptTestStatus.PASSED,
+            PromptTestStatus.FAILED,
+            PromptTestStatus.ERROR,
+            PromptTestStatus.SKIPPED,
         }
 
 
 class TestTestCase:
-    """Tests for the TestCase model."""
+    """Tests for the PromptTestCase model."""
 
     def test_create_from_alias(self) -> None:
         """The 'assert' alias should map to assert_type."""
-        tc = TestCase.model_validate({
+        tc = PromptTestCase.model_validate({
             "name": "test-1",
             "assert": "contains",
             "text": "hello",
@@ -62,12 +62,12 @@ class TestTestCase:
         assert tc.text == "hello"
 
     def test_create_from_field_name(self) -> None:
-        tc = TestCase(name="test-2", assert_type=AssertionType.HAS_ROLE, role="system")
+        tc = PromptTestCase(name="test-2", assert_type=AssertionType.HAS_ROLE, role="system")
         assert tc.assert_type == AssertionType.HAS_ROLE
         assert tc.role == "system"
 
     def test_defaults(self) -> None:
-        tc = TestCase(name="test-3", assert_type=AssertionType.VALID_FORMAT)
+        tc = PromptTestCase(name="test-3", assert_type=AssertionType.VALID_FORMAT)
         assert tc.text is None
         assert tc.role is None
         assert tc.variables is None
@@ -76,7 +76,7 @@ class TestTestCase:
         assert tc.skip_reason is None
 
     def test_skip_fields(self) -> None:
-        tc = TestCase.model_validate({
+        tc = PromptTestCase.model_validate({
             "name": "skipped-test",
             "assert": "contains",
             "text": "hello",
@@ -87,7 +87,7 @@ class TestTestCase:
         assert tc.skip_reason == "Not ready yet"
 
     def test_variables_list(self) -> None:
-        tc = TestCase.model_validate({
+        tc = PromptTestCase.model_validate({
             "name": "var-test",
             "assert": "has_variables",
             "variables": ["user_name", "language"],
@@ -101,49 +101,49 @@ class TestAssertionResult:
     def test_passed_result(self) -> None:
         r = AssertionResult(
             test_name="test-1",
-            status=TestStatus.PASSED,
+            status=PromptTestStatus.PASSED,
             assert_type=AssertionType.CONTAINS,
             message="Content contains 'hello'",
             expected="hello",
             duration_ms=1.5,
         )
-        assert r.status == TestStatus.PASSED
+        assert r.status == PromptTestStatus.PASSED
         assert r.duration_ms == 1.5
 
     def test_failed_result(self) -> None:
         r = AssertionResult(
             test_name="test-2",
-            status=TestStatus.FAILED,
+            status=PromptTestStatus.FAILED,
             assert_type=AssertionType.MAX_TOKENS,
             message="Token count exceeds limit",
             expected=100,
             actual=200,
         )
-        assert r.status == TestStatus.FAILED
+        assert r.status == PromptTestStatus.FAILED
         assert r.expected == 100
         assert r.actual == 200
 
     def test_error_result(self) -> None:
         r = AssertionResult(
             test_name="test-3",
-            status=TestStatus.ERROR,
+            status=PromptTestStatus.ERROR,
             assert_type=AssertionType.MAX_COST,
             message="Cost estimation failed",
         )
-        assert r.status == TestStatus.ERROR
+        assert r.status == PromptTestStatus.ERROR
 
 
 class TestTestSuite:
-    """Tests for the TestSuite model."""
+    """Tests for the PromptTestSuite model."""
 
     def test_create_suite(self) -> None:
-        suite = TestSuite(
+        suite = PromptTestSuite(
             name="my-suite",
             prompt_path=Path("prompts/test.yaml"),
             model="gpt-4o",
             tests=[
-                TestCase(name="t1", assert_type=AssertionType.VALID_FORMAT),
-                TestCase(name="t2", assert_type=AssertionType.CONTAINS, text="hello"),
+                PromptTestCase(name="t1", assert_type=AssertionType.VALID_FORMAT),
+                PromptTestCase(name="t2", assert_type=AssertionType.CONTAINS, text="hello"),
             ],
         )
         assert suite.name == "my-suite"
@@ -151,7 +151,7 @@ class TestTestSuite:
         assert suite.model == "gpt-4o"
 
     def test_suite_no_model(self) -> None:
-        suite = TestSuite(
+        suite = PromptTestSuite(
             name="simple",
             prompt_path=Path("test.yaml"),
             tests=[],
@@ -160,17 +160,17 @@ class TestTestSuite:
 
 
 class TestTestReport:
-    """Tests for the TestReport model."""
+    """Tests for the PromptTestReport model."""
 
     def test_empty_report(self) -> None:
-        report = TestReport()
+        report = PromptTestReport()
         assert report.total == 0
         assert report.passed == 0
         assert report.failed == 0
         assert report.suites == []
 
     def test_report_with_data(self) -> None:
-        report = TestReport(
+        report = PromptTestReport(
             suites=[{"suite_name": "s1", "prompt_path": "p.yaml", "results": []}],
             total=5,
             passed=3,
