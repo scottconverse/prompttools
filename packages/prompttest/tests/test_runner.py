@@ -70,6 +70,38 @@ class TestLoadTestSuite:
         assert suite.prompt_path.is_absolute() or suite.prompt_path.parts[0] != ".."
 
 
+class TestLoadTestSuiteEdgeCases:
+    """Additional edge case tests for load_test_suite."""
+
+    def test_tests_not_a_list(self, tmp_path: Path) -> None:
+        prompt = tmp_path / "p.yaml"
+        prompt.write_text(
+            "messages:\n  - role: user\n    content: hi\n",
+            encoding="utf-8",
+        )
+        test_file = tmp_path / "test_bad_tests.yaml"
+        test_file.write_text(
+            f"prompt: {prompt}\ntests:\n  name: t\n  assert: valid_format\n",
+            encoding="utf-8",
+        )
+        with pytest.raises(ValueError, match="must be a list"):
+            load_test_suite(test_file)
+
+    def test_test_entry_not_a_mapping(self, tmp_path: Path) -> None:
+        prompt = tmp_path / "p.yaml"
+        prompt.write_text(
+            "messages:\n  - role: user\n    content: hi\n",
+            encoding="utf-8",
+        )
+        test_file = tmp_path / "test_bad_entry.yaml"
+        test_file.write_text(
+            f"prompt: {prompt}\ntests:\n  - just a string\n",
+            encoding="utf-8",
+        )
+        with pytest.raises(ValueError, match="must be a mapping"):
+            load_test_suite(test_file)
+
+
 class TestRunTestSuite:
     """Tests for run_test_suite."""
 

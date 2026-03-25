@@ -5,6 +5,7 @@ Test framework for LLM prompt files.
 [![PyPI](https://img.shields.io/badge/PyPI-v1.0.0-blue)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)]()
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-blue)]()
+[![Tests](https://img.shields.io/badge/Tests-146%20passing-green)]()
 
 ## What It Does
 

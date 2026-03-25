@@ -18,7 +18,7 @@ After formatting, promptfmt verifies **semantic equivalence** -- it re-parses th
 pip install promptfmt-ai
 ```
 
-**Dependencies:** prompttools-core-ai >= 1.0, typer >= 0.12, rich >= 13.0, watchfiles >= 0.21
+**Dependencies:** prompttools-core-ai >= 1.0, typer >= 0.12, rich >= 13.0
 
 ## CLI Commands
 

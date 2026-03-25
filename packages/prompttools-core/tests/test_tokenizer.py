@@ -119,3 +119,81 @@ class TestBackwardCompat:
     def test_get_encoding_invalid(self):
         with pytest.raises(TokenizerError, match="Unknown encoding"):
             get_encoding("totally_fake_encoding_name")
+
+
+# ---------------------------------------------------------------------------
+# Provider overhead
+# ---------------------------------------------------------------------------
+
+
+class TestTokenizerProviderOverhead:
+    def test_openai_overhead_is_4(self):
+        tok = Tokenizer(provider="openai")
+        msgs = [Message(role="user", content="Hello")]
+        content_only = tok.count("Hello")
+        total = tok.count_messages(msgs)
+        assert total == content_only + 4
+
+    def test_anthropic_overhead_is_3(self):
+        tok = Tokenizer(provider="anthropic")
+        msgs = [Message(role="user", content="Hello")]
+        content_only = tok.count("Hello")
+        total = tok.count_messages(msgs)
+        assert total == content_only + 3
+
+    def test_google_overhead_is_3(self):
+        tok = Tokenizer(provider="google")
+        msgs = [Message(role="user", content="Hello")]
+        content_only = tok.count("Hello")
+        total = tok.count_messages(msgs)
+        assert total == content_only + 3
+
+    def test_default_overhead_is_4(self):
+        tok = Tokenizer(provider="default")
+        msgs = [Message(role="user", content="Hello")]
+        content_only = tok.count("Hello")
+        total = tok.count_messages(msgs)
+        assert total == content_only + 4
+
+    def test_invalid_provider_raises(self):
+        with pytest.raises(ValueError, match="Unknown provider"):
+            Tokenizer(provider="invalid_provider")
+
+
+# ---------------------------------------------------------------------------
+# count_file consistency
+# ---------------------------------------------------------------------------
+
+
+class TestTokenizerCountFileConsistency:
+    def test_total_equals_sum_of_messages(self):
+        tok = Tokenizer()
+        pf = PromptFile(
+            path=Path("test.yaml"),
+            format=PromptFormat.YAML,
+            raw_content="test",
+            messages=[
+                Message(role="system", content="You are helpful."),
+                Message(role="user", content="Tell me a joke."),
+                Message(role="assistant", content="Why did the chicken..."),
+            ],
+        )
+        total = tok.count_file(pf)
+        msg_sum = sum(m.token_count for m in pf.messages)
+        assert total == msg_sum
+        assert pf.total_tokens == msg_sum
+
+
+# ---------------------------------------------------------------------------
+# encoding_name property
+# ---------------------------------------------------------------------------
+
+
+class TestTokenizerEncodingName:
+    def test_encoding_name_returns_constructor_value(self):
+        tok = Tokenizer(encoding="cl100k_base")
+        assert tok.encoding_name == "cl100k_base"
+
+    def test_encoding_name_o200k(self):
+        tok = Tokenizer(encoding="o200k_base")
+        assert tok.encoding_name == "o200k_base"

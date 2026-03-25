@@ -5,11 +5,12 @@ from pathlib import Path
 import pytest
 
 from prompttools_core.errors import ParseError
-from prompttools_core.models import PromptFormat
+from prompttools_core.models import PromptFormat, ToolConfig
 from prompttools_core.parser import (
     extract_variables,
     parse_directory,
     parse_file,
+    parse_pipeline,
     parse_stdin,
 )
 
@@ -277,3 +278,158 @@ class TestParseDirectory:
         for pf in results:
             assert pf.content_hash != ""
             assert len(pf.content_hash) == 64
+
+    def test_exclude_patterns_filter_files(self, fixtures_dir):
+        config = ToolConfig(exclude=["clean.*"])
+        results = parse_directory(fixtures_dir, config=config)
+        names = [pf.path.name for pf in results]
+        assert "clean.yaml" not in names
+        assert "clean.json" not in names
+        assert "clean.txt" not in names
+
+    def test_not_a_directory_raises(self, tmp_path):
+        f = tmp_path / "not_a_dir.txt"
+        f.write_text("hello", encoding="utf-8")
+        with pytest.raises(ParseError, match="Not a directory"):
+            parse_directory(f)
+
+
+# ---------------------------------------------------------------------------
+# parse_pipeline
+# ---------------------------------------------------------------------------
+
+
+class TestParsePipeline:
+    def test_pipeline_with_fixture(self, fixtures_dir):
+        manifest = fixtures_dir / "pipeline" / "manifest.yaml"
+        pipeline = parse_pipeline(manifest)
+        assert pipeline.name == "research-and-edit"
+        assert len(pipeline.stages) == 2
+        assert pipeline.stages[0].name == "research"
+        assert pipeline.stages[1].name == "editing"
+
+    def test_pipeline_populates_prompt_file(self, fixtures_dir):
+        manifest = fixtures_dir / "pipeline" / "manifest.yaml"
+        pipeline = parse_pipeline(manifest)
+        for stage in pipeline.stages:
+            assert stage.prompt_file is not None
+            assert len(stage.prompt_file.messages) > 0
+
+    def test_pipeline_populates_depends_on(self, fixtures_dir):
+        manifest = fixtures_dir / "pipeline" / "manifest.yaml"
+        pipeline = parse_pipeline(manifest)
+        assert pipeline.stages[0].depends_on == []
+        assert pipeline.stages[1].depends_on == ["research"]
+
+    def test_pipeline_nonexistent_manifest_raises(self):
+        with pytest.raises(FileNotFoundError):
+            parse_pipeline(Path("/nonexistent/manifest.yaml"))
+
+    def test_pipeline_missing_stages_key_raises(self, tmp_path):
+        manifest = tmp_path / "bad_manifest.yaml"
+        manifest.write_text("name: test\nmodel: gpt-4\n", encoding="utf-8")
+        with pytest.raises(ParseError, match="stages"):
+            parse_pipeline(manifest)
+
+    def test_pipeline_non_dict_stage_raises(self, tmp_path):
+        manifest = tmp_path / "bad_stages.yaml"
+        manifest.write_text(
+            "name: test\nstages:\n  - just_a_string\n",
+            encoding="utf-8",
+        )
+        with pytest.raises(ParseError, match="mapping"):
+            parse_pipeline(manifest)
+
+    def test_pipeline_resolves_relative_paths(self, fixtures_dir):
+        manifest = fixtures_dir / "pipeline" / "manifest.yaml"
+        pipeline = parse_pipeline(manifest)
+        # Stage file paths in the model are relative, but prompt_file.path is resolved
+        for stage in pipeline.stages:
+            assert stage.prompt_file.path.is_absolute()
+
+
+# ---------------------------------------------------------------------------
+# Additional parse_file edge cases
+# ---------------------------------------------------------------------------
+
+
+class TestParseFileEdgeCases:
+    def test_yml_extension_works(self, tmp_path):
+        yml_file = tmp_path / "test.yml"
+        yml_file.write_text(
+            'messages:\n  - role: user\n    content: "hello"\n',
+            encoding="utf-8",
+        )
+        pf = parse_file(yml_file)
+        assert pf.format == PromptFormat.YAML
+        assert len(pf.messages) == 1
+
+    def test_parse_file_returns_content_hash(self, clean_yaml):
+        pf = parse_file(clean_yaml)
+        assert len(pf.content_hash) == 64
+
+
+# ---------------------------------------------------------------------------
+# Additional YAML edge cases
+# ---------------------------------------------------------------------------
+
+
+class TestParseYamlEdgeCases:
+    def test_invalid_role_raises(self, tmp_path):
+        f = tmp_path / "bad_role.yaml"
+        f.write_text(
+            'messages:\n  - role: villain\n    content: "evil"\n',
+            encoding="utf-8",
+        )
+        with pytest.raises(ParseError, match="Invalid role"):
+            parse_file(f)
+
+
+# ---------------------------------------------------------------------------
+# Additional JSON edge cases
+# ---------------------------------------------------------------------------
+
+
+class TestParseJsonEdgeCases:
+    def test_prompt_layout_via_parse_file(self, tmp_path):
+        f = tmp_path / "prompt_only.json"
+        f.write_text('{"prompt": "Hello {{name}}"}', encoding="utf-8")
+        pf = parse_file(f)
+        assert len(pf.messages) == 1
+        assert pf.messages[0].role == "user"
+        assert "name" in pf.variables
+
+    def test_no_messages_or_prompt_raises(self, tmp_path):
+        f = tmp_path / "empty.json"
+        f.write_text('{"model": "gpt-4"}', encoding="utf-8")
+        with pytest.raises(ParseError, match="messages.*prompt"):
+            parse_file(f)
+
+
+# ---------------------------------------------------------------------------
+# Additional Markdown edge cases
+# ---------------------------------------------------------------------------
+
+
+class TestParseMarkdownEdgeCases:
+    def test_frontmatter_variable_defaults(self, tmp_path):
+        f = tmp_path / "defaults.md"
+        f.write_text(
+            "---\ndefaults:\n  name: World\n  lang: en\n---\n\nHello {{name}}\n",
+            encoding="utf-8",
+        )
+        pf = parse_file(f)
+        assert pf.variable_defaults == {"name": "World", "lang": "en"}
+        assert "name" in pf.variables
+
+
+# ---------------------------------------------------------------------------
+# Additional variable extraction edge cases
+# ---------------------------------------------------------------------------
+
+
+class TestVariableExtractionEdgeCases:
+    def test_jinja_takes_priority_over_fstring(self):
+        text = "{{name}} and {name}"
+        vars = extract_variables(text)
+        assert vars["name"] == "jinja"

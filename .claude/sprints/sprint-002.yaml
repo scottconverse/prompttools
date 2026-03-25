@@ -1,0 +1,455 @@
+sprint: 2
+title: "prompttools-core-ai: Verification, hardening, and test gap closure"
+source: "Verification sprint -- all source files in packages/prompttools-core/"
+created: "2026-03-25"
+scope: medium
+# -------------------------------------------------------------------
+# CURRENT STATE
+# -------------------------------------------------------------------
+# The prompttools-core package is implemented with:
+#   - models.py: 7 Pydantic v2 models (PromptFormat, Message, PromptFile,
+#     PipelineStage, PromptPipeline, ModelProfile, ToolConfig)
+#   - parser.py: Multi-format parser (parse_file, parse_stdin,
+#     parse_directory, parse_pipeline)
+#   - formats/: 4 sub-parsers (text, markdown, yaml_parser, json_parser)
+#     plus _variables.py for template variable extraction
+#   - tokenizer.py: Tokenizer class + count_tokens + get_encoding
+#   - profiles.py: 10 built-in model profiles + custom registry
+#   - config.py: Config file discovery and merging
+#   - cache.py: SHA256-based PromptCache with TTL support
+#   - plugins.py: Plugin discovery and loading
+#   - errors.py: 7-class exception hierarchy
+#   - __init__.py: Public API surface with __all__
+#
+# Test files: 8 test files + conftest.py (~99 tests)
+#
+# This sprint focuses on:
+#   1. Verifying all code against testable criteria
+#   2. Identifying and filling test gaps
+#   3. Hardening pyproject.toml for release
+#   4. Ensuring README accuracy
+# -------------------------------------------------------------------
+
+dependencies:
+  - "pydantic>=2.0 must be installed"
+  - "pyyaml>=6.0 must be installed"
+  - "tiktoken>=0.7 must be installed"
+  - "pytest>=8.0 must be installed (dev dependency)"
+deliverables:
+  # -- 1. PYPROJECT.TOML --
+  - file: "packages/prompttools-core/pyproject.toml"
+    description: "Package metadata and build configuration for prompttools-core-ai."
+    action: modify
+    acceptance:
+      - "name is prompttools-core-ai"
+      - "version is 1.0.0"
+      - "requires-python is >=3.9"
+      - "Development Status classifier is 4 - Beta"
+      - "[project.urls] section exists with Homepage and Repository keys"
+      - "Homepage URL points to the prompttools monorepo GitHub page (not a standalone repo or placeholder)"
+      - "Repository URL points to the prompttools monorepo GitHub page"
+      - "dependencies include pydantic>=2.0, pyyaml>=6.0, tiktoken>=0.7"
+      - "dev extras include pytest>=8.0, pytest-cov, ruff, mypy"
+      - "[tool.hatch.build.targets.wheel] packages points to prompttools_core"
+      - "license is MIT"
+
+  # -- 2. __init__.py -- PUBLIC API SURFACE --
+  - file: "packages/prompttools-core/prompttools_core/__init__.py"
+    description: "Public API surface with all convenience imports and __all__ list."
+    action: modify
+    acceptance:
+      - "__version__ is 1.0.0"
+      - "Exports all 7 error classes: CacheError, ConfigError, ParseError, PluginError, ProfileNotFoundError, PromptToolsError, TokenizerError"
+      - "Exports all 7 model classes: Message, ModelProfile, PipelineStage, PromptFile, PromptFormat, PromptPipeline, ToolConfig"
+      - "Exports all 4 parser functions: parse_directory, parse_file, parse_pipeline, parse_stdin"
+      - "Exports 3 tokenizer symbols: Tokenizer, count_tokens, get_encoding"
+      - "Exports 4 profile symbols: BUILTIN_PROFILES, get_profile, list_profiles, register_profile"      - "Exports PromptCache from cache"
+      - "Exports find_config_file and load_config from config"
+      - "Exports discover_plugins and load_plugin from plugins"
+      - "__all__ list contains exactly 27 entries matching all exports above"
+      - "from prompttools_core import PromptFile, parse_file, Tokenizer works without error"
+
+  # -- 3. DATA MODELS --
+  - file: "packages/prompttools-core/prompttools_core/models.py"
+    description: "Pydantic v2 data models for all prompt structures."
+    action: modify
+    acceptance:
+      - "PromptFormat enum has exactly 4 values: TEXT=text, MARKDOWN=md, YAML=yaml, JSON=json"
+      - "Message.role is Literal[system, user, assistant, tool]"
+      - "Message has fields: role, content, line_start, line_end, token_count, metadata"
+      - "Message optional fields default to None (line_start, line_end, token_count) and dict (metadata)"
+      - "PromptFile has fields: path, format, raw_content, messages, variables, variable_defaults, metadata, total_tokens, content_hash"
+      - "PromptFile.content_hash is auto-computed via model_post_init when raw_content is non-empty"
+      - "PromptFile.content_hash is NOT overwritten when explicitly provided"
+      - "PromptFile.system_message() returns first system message or None"
+      - "PromptFile.user_messages() returns all user-role messages"
+      - "PromptFile.has_role(role) returns bool"
+      - "PipelineStage has fields: name, file, persona, expected_output_tokens, depends_on, prompt_file"
+      - "PromptPipeline has fields: name, model, manifest_path, stages, total_tokens, cumulative_tokens"
+      - "ModelProfile is frozen (immutable after creation)"
+      - "ModelProfile has tokenizer_encoding property that aliases encoding"
+      - "ToolConfig has fields: model, tokenizer_encoding, exclude, plugins, cache_enabled, cache_dir, extra"
+      - "All models use Pydantic v2 BaseModel (import from pydantic, not pydantic.v1)"
+  # -- 4. PARSER --
+  - file: "packages/prompttools-core/prompttools_core/parser.py"
+    description: "Multi-format prompt file parser with directory and pipeline scanning."
+    action: modify
+    acceptance:
+      - "parse_file() auto-detects format from file extension (.txt, .md, .yaml, .yml, .json)"
+      - "parse_file() raises ParseError for unsupported extensions"
+      - "parse_file() raises FileNotFoundError when file does not exist"
+      - "parse_file() returns a PromptFile with messages list populated"
+      - "parse_file() returns a PromptFile with content_hash populated (64-char hex)"
+      - "parse_stdin() accepts format strings: text, md, yaml, json"
+      - "parse_stdin() raises ParseError for unsupported format string"
+      - "parse_stdin() returns a PromptFile with path name set to -"
+      - "parse_directory() recursively finds .txt, .md, .yaml, .yml, .json files"
+      - "parse_directory() raises ParseError when path is not a directory"
+      - "parse_directory() skips files that fail to parse (does not raise)"
+      - "parse_directory() respects config.exclude glob patterns"
+      - "parse_pipeline() parses a YAML manifest with stages list"
+      - "parse_pipeline() raises FileNotFoundError when manifest does not exist"
+      - "parse_pipeline() raises ParseError when manifest is malformed (missing stages)"
+      - "parse_pipeline() resolves stage file paths relative to manifest directory"
+      - "parse_pipeline() populates prompt_file on each PipelineStage"
+  # -- 5. FORMAT SUB-PARSERS --
+  - file: "packages/prompttools-core/prompttools_core/formats/_variables.py"
+    description: "Template variable extraction for jinja, fstring, and xml patterns."
+    action: modify
+    acceptance:
+      - "extract_variables() detects {{var}} as jinja style"
+      - "extract_variables() detects {var} as fstring style"
+      - "extract_variables() detects <var> as xml style"
+      - "extract_variables() excludes common HTML tags (div, span, p, etc.) from XML detection"
+      - "extract_variables() returns empty dict for empty string"
+      - "extract_variables() returns empty dict for text with no variables"
+      - "Jinja vars take priority over fstring vars when same name appears in both styles"
+      - "EXCLUDED_XML_TAGS frozenset contains at least 30 common HTML tags"
+
+  - file: "packages/prompttools-core/prompttools_core/formats/yaml_parser.py"
+    description: "YAML prompt file parser with role validation and variable extraction."
+    action: modify
+    acceptance:
+      - "parse_yaml() requires a messages list in the YAML"
+      - "parse_yaml() raises ParseError for invalid YAML syntax"
+      - "parse_yaml() raises ParseError when top-level is not a mapping"
+      - "parse_yaml() raises ParseError when messages is not a list"
+      - "parse_yaml() raises ParseError for invalid role values"
+      - "parse_yaml() validates roles against system, user, assistant, tool"
+      - "parse_yaml() extracts metadata from non-messages/defaults keys"
+      - "parse_yaml() extracts variable_defaults from defaults key"
+      - "parse_yaml() populates line_start on messages by scanning for role: patterns"
+      - "parse_yaml() extracts variables from message content"
+  - file: "packages/prompttools-core/prompttools_core/formats/json_parser.py"
+    description: "JSON prompt file parser supporting messages-array and prompt-string layouts."
+    action: modify
+    acceptance:
+      - "parse_json() supports messages layout (OpenAI chat format)"
+      - "parse_json() supports prompt layout (single prompt string)"
+      - "parse_json() raises ParseError for invalid JSON syntax"
+      - "parse_json() raises ParseError when neither messages nor prompt key present"
+      - "parse_json() validates roles against system, user, assistant, tool"
+      - "parse_json() extracts variable_defaults from defaults key"
+      - "parse_json() extracts variables from message/prompt content"
+
+  - file: "packages/prompttools-core/prompttools_core/formats/markdown.py"
+    description: "Markdown prompt parser with YAML frontmatter support."
+    action: modify
+    acceptance:
+      - "parse_markdown() extracts YAML frontmatter between --- delimiters"
+      - "parse_markdown() stores frontmatter as metadata dict"
+      - "parse_markdown() extracts variable_defaults from frontmatter defaults key"
+      - "parse_markdown() treats entire body as single user message"
+      - "parse_markdown() extracts variables from body text"
+      - "parse_markdown() works with no frontmatter (metadata is empty dict)"
+
+  - file: "packages/prompttools-core/prompttools_core/formats/text.py"
+    description: "Plain text prompt parser treating content as a single user message."
+    action: modify
+    acceptance:
+      - "parse_text() creates a single user-role message from content"
+      - "parse_text() sets line_start to 1"
+      - "parse_text() extracts variables from content"
+  # -- 6. TOKENIZER --
+  - file: "packages/prompttools-core/prompttools_core/tokenizer.py"
+    description: "Tokenization engine wrapping tiktoken with model-aware encoding."
+    action: modify
+    acceptance:
+      - "Tokenizer(encoding, provider) creates a tokenizer with the given encoding"
+      - "Tokenizer raises ValueError for unknown provider"
+      - "Tokenizer.count(text) returns int token count"
+      - "Tokenizer.count with empty string returns 0"
+      - "Tokenizer.count_messages(messages) includes per-message role overhead"
+      - "Tokenizer.count_messages with empty list returns 0"
+      - "Tokenizer.count_file(prompt_file) populates msg.token_count on each message"
+      - "Tokenizer.count_file(prompt_file) populates prompt_file.total_tokens"
+      - "Tokenizer.for_model(gpt-4) uses cl100k_base encoding"
+      - "Tokenizer.for_model(gpt-4o) uses o200k_base encoding"
+      - "Tokenizer.for_model(nonexistent) raises TokenizerError"
+      - "count_tokens() free function returns int > 0 for non-empty string"
+      - "get_encoding(cl100k_base) returns a tiktoken encoding object"
+      - "get_encoding(invalid_name) raises TokenizerError"
+      - "Role overhead is 4 for openai, 3 for anthropic, 3 for google, 4 for default"
+
+  # -- 7. PROFILES --
+  - file: "packages/prompttools-core/prompttools_core/profiles.py"
+    description: "Built-in model profiles and custom profile registry."
+    action: modify
+    acceptance:
+      - "BUILTIN_PROFILES contains exactly 10 profiles"
+      - "All 10 profiles have non-None input_price_per_mtok and output_price_per_mtok"
+      - "All 10 profiles have context_window > 0"      - "All 10 profiles have a non-empty encoding string"
+      - "Profiles exist for: gpt-4, gpt-4-turbo, gpt-4o, gpt-4o-mini, claude-3-haiku, claude-3-sonnet, claude-3-opus, claude-4-sonnet, gemini-1.5-pro, gemini-2.0-flash"
+      - "Non-OpenAI profiles have approximate_tokenizer=True"
+      - "OpenAI profiles have approximate_tokenizer=False (default)"
+      - "get_profile(name) returns custom profile when registered, falling back to builtin"
+      - "get_profile(unknown) returns None"
+      - "list_profiles() returns merged dict of builtin + custom"
+      - "register_profile(profile) adds to custom registry"
+      - "Custom profile with same name as builtin overrides the builtin in get_profile()"
+
+  # -- 8. CONFIG --
+  - file: "packages/prompttools-core/prompttools_core/config.py"
+    description: "Hierarchical config file discovery and merging."
+    action: modify
+    acceptance:
+      - "find_config_file() walks up directory tree"
+      - "find_config_file() returns None when no config file exists"
+      - "find_config_file() checks .prompt{tool_name}.yaml, .prompttools.yaml, .promptlint.yaml in order"
+      - "Tool-specific config takes priority over suite-wide config at same directory level"
+      - "load_config() returns ToolConfig instance"
+      - "load_config() applies config file values (model, exclude, cache, plugins)"
+      - "load_config() applies CLI overrides on top of config file values"
+      - "load_config() resolves model profile encoding when model is specified"
+      - "load_config() merges tool-specific section into config.extra"
+  # -- 9. CACHE --
+  - file: "packages/prompttools-core/prompttools_core/cache.py"
+    description: "SHA256-based file-system cache with TTL support."
+    action: modify
+    acceptance:
+      - "PromptCache.get() returns None on miss"
+      - "PromptCache.set() then get() returns the stored value"
+      - "PromptCache.set() with TTL makes entry expire after TTL seconds"
+      - "PromptCache.invalidate() removes a specific key"
+      - "PromptCache.invalidate() on nonexistent key does not raise"
+      - "PromptCache.clear() removes the entire cache directory"
+      - "PromptCache.clear() on nonexistent directory does not raise"
+      - "PromptCache.content_key() is deterministic (same input = same output)"
+      - "PromptCache.content_key() produces different keys for different content"
+      - "PromptCache.content_key() produces different keys for different encodings"
+      - "Cache data persists to disk as JSON (cache.json in cache_dir)"
+
+  # -- 10. PLUGINS --
+  - file: "packages/prompttools-core/prompttools_core/plugins.py"
+    description: "Generic plugin discovery and loading from directories."
+    action: modify
+    acceptance:
+      - "load_plugin() returns empty list for non-.py files"
+      - "load_plugin() returns empty list for nonexistent files"
+      - "load_plugin() discovers concrete subclasses of base_class"
+      - "load_plugin() raises PluginError when module fails to import"
+      - "discover_plugins() scans multiple directories"
+      - "discover_plugins() skips files starting with underscore"
+      - "discover_plugins() skips nonexistent directories (warning only)"
+      - "discover_plugins() deduplicates by class name across directories"
+  # -- 11. ERRORS --
+  - file: "packages/prompttools-core/prompttools_core/errors.py"
+    description: "Shared exception hierarchy for the prompttools suite."
+    action: modify
+    acceptance:
+      - "PromptToolsError is the base exception"
+      - "ParseError inherits from both PromptToolsError and ValueError"
+      - "ConfigError inherits from PromptToolsError"
+      - "TokenizerError inherits from PromptToolsError"
+      - "ProfileNotFoundError inherits from PromptToolsError"
+      - "PluginError inherits from PromptToolsError"
+      - "CacheError inherits from PromptToolsError"
+      - "All 7 error classes are importable from prompttools_core"
+
+  # -- 12. TEST GAPS: PARSER EDGE CASES --
+  - file: "packages/prompttools-core/tests/test_parser.py"
+    description: "Add missing tests for parser edge cases and pipeline parsing."
+    action: modify
+    acceptance:
+      - "Tests parse_pipeline() with the fixtures/pipeline/ manifest (2-stage pipeline)"
+      - "Tests parse_pipeline() raises FileNotFoundError for nonexistent manifest"
+      - "Tests parse_pipeline() raises ParseError for manifest missing stages key"
+      - "Tests parse_pipeline() raises ParseError for non-dict stage entries"
+      - "Tests parse_pipeline() populates prompt_file on each stage"
+      - "Tests parse_pipeline() populates stage depends_on list"
+      - "Tests parse_directory() with exclude patterns filters files"
+      - "Tests parse_file() with .yml extension works (alias for .yaml)"
+      - "Tests parse_yaml() raises ParseError for invalid role"
+      - "Tests parse_json() with prompt layout (single string)"
+      - "Tests parse_json() raises ParseError for JSON with neither messages nor prompt key"      - "Tests parse_markdown() with frontmatter variable_defaults extraction"
+      - "Tests variable extraction with duplicate variable names across styles (jinja takes priority)"
+      - "Minimum 38 test cases in test_parser.py (currently ~25, need ~13 more)"
+
+  # -- 13. TEST GAPS: CONFIG EDGE CASES --
+  - file: "packages/prompttools-core/tests/test_config.py"
+    description: "Add missing tests for config edge cases."
+    action: modify
+    acceptance:
+      - "Tests load_config() with model that has a known profile resolves tokenizer_encoding"
+      - "Tests load_config() with tool-specific section merges into config.extra"
+      - "Tests load_config() with invalid YAML config file raises ConfigError"
+      - "Tests load_config() with empty YAML config file returns defaults"
+      - "Tests load_config() with config file that is not a mapping raises ConfigError"
+      - "Tests find_config_file() accepts a file path (resolves to parent dir)"
+      - "Tests load_config() with cache section (enabled + dir)"
+      - "Minimum 16 test cases in test_config.py (currently ~9, need ~7 more)"
+
+  # -- 14. TEST GAPS: CACHE TTL AND PERSISTENCE --
+  - file: "packages/prompttools-core/tests/test_cache.py"
+    description: "Add missing tests for cache TTL expiry and disk persistence."
+    action: modify
+    acceptance:
+      - "Tests set() with TTL=0 causes immediate expiry on next get()"
+      - "Tests set() without TTL does not expire"
+      - "Tests cache data survives reload from disk (new PromptCache instance same dir)"
+      - "Tests cache handles corrupted JSON on disk gracefully (returns fresh cache)"
+      - "Tests cache handles version mismatch on disk (returns fresh cache)"
+      - "Tests set() with CacheError on write failure (read-only dir or similar)"
+      - "Minimum 17 test cases in test_cache.py (currently ~11, need ~6 more)"
+  # -- 15. TEST GAPS: TOKENIZER EDGE CASES --
+  - file: "packages/prompttools-core/tests/test_tokenizer.py"
+    description: "Add missing tests for tokenizer provider overhead and edge cases."
+    action: modify
+    acceptance:
+      - "Tests Tokenizer with provider=openai uses 4-token overhead per message"
+      - "Tests Tokenizer with provider=anthropic uses 3-token overhead per message"
+      - "Tests Tokenizer with provider=google uses 3-token overhead per message"
+      - "Tests Tokenizer with provider=default uses 4-token overhead"
+      - "Tests Tokenizer raises ValueError for invalid provider name"
+      - "Tests count_file() returns same total as sum of individual msg.token_count values"
+      - "Tests encoding_name property returns the encoding string passed to constructor"
+      - "Minimum 19 test cases in test_tokenizer.py (currently ~12, need ~7 more)"
+
+  # -- 16. TEST GAPS: ERRORS COVERAGE --
+  - file: "packages/prompttools-core/tests/test_errors.py"
+    description: "Explicit tests for the error hierarchy (currently untested as standalone file)."
+    action: create
+    acceptance:
+      - "Tests PromptToolsError is catchable as Exception"
+      - "Tests ParseError is catchable as both PromptToolsError and ValueError"
+      - "Tests ConfigError is catchable as PromptToolsError but not ValueError"
+      - "Tests TokenizerError is catchable as PromptToolsError"
+      - "Tests ProfileNotFoundError is catchable as PromptToolsError"
+      - "Tests PluginError is catchable as PromptToolsError"
+      - "Tests CacheError is catchable as PromptToolsError"
+      - "Tests all 7 error classes have correct __name__"
+      - "Tests error classes accept and preserve message string"
+      - "Minimum 10 test cases"
+  # -- 17. TEST GAPS: FORMATS COVERAGE --
+  - file: "packages/prompttools-core/tests/test_formats.py"
+    description: "Direct tests for format sub-parsers (currently only tested indirectly through parse_file)."
+    action: create
+    acceptance:
+      - "Tests parse_text() returns PromptFormat.TEXT"
+      - "Tests parse_text() creates single user message with line_start=1"
+      - "Tests parse_text() extracts variables from content"
+      - "Tests parse_yaml() with all 4 valid roles"
+      - "Tests parse_yaml() with variable_defaults from defaults key"
+      - "Tests parse_yaml() raises ParseError for missing messages key"
+      - "Tests parse_json() messages layout with multiple roles"
+      - "Tests parse_json() prompt layout returns single user message"
+      - "Tests parse_json() raises ParseError for invalid JSON"
+      - "Tests parse_markdown() with frontmatter defaults extraction"
+      - "Tests parse_markdown() without frontmatter returns empty metadata"
+      - "Tests extract_variables() with all three patterns simultaneously"
+      - "Tests extract_variables() jinja priority over fstring for same name"
+      - "Tests EXCLUDED_XML_TAGS contains div, span, p, html, body"
+      - "Minimum 15 test cases"
+
+  # -- 18. PIPELINE MANIFEST FIXTURE --
+  - file: "packages/prompttools-core/tests/fixtures/pipeline/manifest.yaml"
+    description: "Pipeline manifest fixture for testing parse_pipeline()."
+    action: create
+    acceptance:
+      - "Contains name key with a pipeline name"
+      - "Contains stages list with at least 2 entries"
+      - "Each stage has name and file keys"
+      - "Stage file paths reference existing stage-1.yaml and stage-2.yaml"      - "At least one stage has depends_on referencing another stage"
+      - "YAML parses without error"
+
+  # -- 19. README.md --
+  - file: "packages/prompttools-core/README.md"
+    description: "README documentation matching actual features."
+    action: modify
+    acceptance:
+      - "Install command uses pip install prompttools-core-ai (not prompttools-core)"
+      - "API Reference lists parse_file, parse_directory, parse_stdin, parse_pipeline"
+      - "API Reference lists Tokenizer, count_tokens, get_encoding"
+      - "API Reference lists get_profile, list_profiles, register_profile, ModelProfile"
+      - "API Reference lists load_config, find_config_file"
+      - "API Reference lists PromptCache"
+      - "API Reference lists discover_plugins, load_plugin"
+      - "Built-in Profiles table lists all 10 profiles (not more, not fewer)"
+      - "Built-in Profiles table pricing matches values in profiles.py"
+      - "Supported Formats table lists .yaml, .yml, .json, .md, .txt"
+      - "Error Hierarchy lists all 7 error classes"
+      - "Data Models section documents PromptFile, Message, ModelProfile, ToolConfig, PromptPipeline, PipelineStage"
+      - "Template Variable section mentions {{var}}, {var}, <var> syntax"
+      - "README mentions all suite tools: promptfmt, promptcost, prompttest, promptlint, promptdiff, promptvault"
+      - "No placeholder URLs (all links are real or badge-only)"
+      - "Test count is documented accurately (reflecting final count after gap closure)"
+constraints:
+  - "Use Pydantic v2 BaseModel for all data classes (not v1 syntax)"
+  - "Use hatchling as build backend"
+  - "Source layout: prompttools_core/ (flat layout, NOT src/ layout)"
+  - "All tests use pytest (no unittest)"
+  - "Do NOT rewrite files that already pass all acceptance criteria -- only modify where gaps exist"
+  - "Minimum 120 test cases total across all test files after gap closure (currently ~99)"
+  - "All existing tests must continue to pass (zero regressions)"
+  - "pyproject.toml URLs must point to a real GitHub repo, not placeholders"
+
+notes: |
+  The prompttools-core package is ALREADY IMPLEMENTED and appears functional.
+  This sprint is about VERIFICATION AND HARDENING, not rewriting.
+
+  KEY FINDINGS FROM CODE REVIEW:
+
+  1. PYPROJECT.TOML GAPS:
+     - Missing [project.urls] section entirely -- no Homepage or Repository URLs
+     - Development Status is correctly 4 - Beta (good)
+     - Build config and deps look correct
+
+  2. TEST GAPS IDENTIFIED:
+     - No test for parse_pipeline() -- pipeline parsing is completely untested
+     - No pipeline manifest fixture exists (stage-1.yaml and stage-2.yaml exist
+       but no manifest.yaml)
+     - No test for .yml extension alias
+     - No test for parse_yaml() invalid role rejection
+     - No test for parse_json() missing keys error
+     - No test for markdown variable_defaults extraction     - No standalone test for error hierarchy (tested indirectly but no test_errors.py)
+     - No direct test for format sub-parsers (only tested through parse_file)
+     - Config tests missing: model profile resolution, tool-specific extra merge,
+       invalid YAML handling, empty config file, cache section
+     - Cache tests missing: TTL expiry, disk persistence across instances,
+       corrupted file recovery, version mismatch handling
+     - Tokenizer tests missing: provider overhead verification, invalid provider,
+       encoding_name property, count_file sum consistency
+
+  3. README CHECK:
+     - Install command correctly says pip install prompttools-core-ai (good)
+     - README mentions only 4 suite tools (promptfmt, promptcost, prompttest,
+       promptlint) but suite has 7 packages including promptdiff and
+       promptvault -- needs update
+     - All API docs appear to match actual code
+     - Built-in profiles table matches profiles.py (10 profiles)
+     - No placeholder URLs found
+
+  4. CODE QUALITY:
+     - All models use Pydantic v2 correctly
+     - Parser handles all 4 formats
+     - Variable extraction covers jinja/fstring/xml
+     - Cache has TTL support in code but no tests for it
+     - Plugin system handles edge cases well
+     - Config merging follows documented priority order
+
+  The Builder should:
+  1. Add [project.urls] to pyproject.toml
+  2. Create the pipeline manifest fixture
+  3. Add ~25-30 new tests across existing and new test files
+  4. Update README to mention all 7 suite packages
+  5. NOT rewrite any source files that already work correctly

@@ -21,7 +21,12 @@ dependencies = [
     "prompttools-core-ai>=1.0,<2.0",
     "typer[all]>=0.12",
     "rich>=13.0",
+    "pydantic>=2.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/scottconverse/prompttools"
+Repository = "https://github.com/scottconverse/prompttools"
 
 [project.scripts]
 promptcost = "promptcost.cli:app"

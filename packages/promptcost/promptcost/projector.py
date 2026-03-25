@@ -27,7 +27,7 @@ def _parse_volume(volume: str) -> int:
         "month": 1.0 / 30.0,
     }
 
-    return int(count * multipliers[period])
+    return round(count * multipliers[period])
 
 
 def project_cost(

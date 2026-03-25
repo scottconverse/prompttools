@@ -153,6 +153,24 @@ class TestFormatJson:
         assert data["total"] == 0
 
 
+class TestFormatTextDuration:
+    """Additional tests for text formatter details."""
+
+    def test_contains_duration(self, sample_report: PromptTestReport) -> None:
+        output = format_text(sample_report)
+        assert "ms" in output
+
+    def test_contains_rich_markup(self, sample_report: PromptTestReport) -> None:
+        output = format_text(sample_report)
+        assert "[green]" in output or "[red]" in output
+
+    def test_json_duration_ms_field(self, sample_report: PromptTestReport) -> None:
+        output = format_json(sample_report)
+        data = json.loads(output)
+        assert "duration_ms" in data
+        assert data["duration_ms"] == 2.1
+
+
 class TestFormatJunit:
     """Tests for JUnit XML output formatting."""
 

@@ -187,3 +187,121 @@ class TestGetPackageDir:
     ) -> None:
         with pytest.raises(FileNotFoundError):
             populated_registry.get_package_dir("@test/greeting-prompts", "9.9.9")
+
+
+class TestSampleManifestWithDeps:
+    """Tests using the sample_manifest_with_deps fixture."""
+
+    def test_manifest_with_deps_has_dependencies(
+        self, sample_manifest_with_deps: PackageManifest
+    ) -> None:
+        """Verify the fixture has the expected dependencies."""
+        assert "@test/greeting-prompts" in sample_manifest_with_deps.dependencies
+        assert "@test/utils" in sample_manifest_with_deps.dependencies
+        assert sample_manifest_with_deps.name == "@test/advanced-prompts"
+
+
+class TestInstallMethod:
+    """Tests for the install() method."""
+
+    def test_install_with_deps(
+        self, tmp_path: Path
+    ) -> None:
+        """Install resolves dependencies and produces LockEntry list."""
+        reg = LocalRegistry(registry_dir=tmp_path / "reg")
+
+        # Publish a dependency
+        dep_dir = tmp_path / "dep"
+        dep_dir.mkdir()
+        dep_manifest = {
+            "name": "@test/dep",
+            "version": "1.0.0",
+            "description": "A dep",
+            "author": "Test",
+            "prompts": [],
+        }
+        (dep_dir / "promptvault.yaml").write_text(
+            yaml.dump(dep_manifest), encoding="utf-8"
+        )
+        reg.publish(dep_dir)
+
+        # Create manifest with dependency
+        manifest = PackageManifest(
+            name="@test/app",
+            version="1.0.0",
+            description="App",
+            author="Test",
+            dependencies={"@test/dep": "^1.0.0"},
+        )
+
+        entries = reg.install(manifest)
+        assert len(entries) == 1
+        assert entries[0].version == "1.0.0"
+        assert entries[0].integrity  # non-empty hash
+
+    def test_install_raises_when_resolved_not_on_disk(
+        self, tmp_path: Path
+    ) -> None:
+        """Install raises ValueError when resolved package dir does not exist."""
+        reg = LocalRegistry(registry_dir=tmp_path / "reg")
+
+        # Publish a dependency then delete its directory
+        dep_dir = tmp_path / "dep"
+        dep_dir.mkdir()
+        dep_manifest = {
+            "name": "@test/dep",
+            "version": "1.0.0",
+            "description": "A dep",
+            "author": "Test",
+            "prompts": [],
+        }
+        (dep_dir / "promptvault.yaml").write_text(
+            yaml.dump(dep_manifest), encoding="utf-8"
+        )
+        reg.publish(dep_dir)
+
+        # Remove the published directory from disk
+        import shutil
+        pkg_on_disk = reg.packages_dir / "@test/dep" / "1.0.0"
+        shutil.rmtree(pkg_on_disk)
+
+        manifest = PackageManifest(
+            name="@test/app",
+            version="1.0.0",
+            description="App",
+            author="Test",
+            dependencies={"@test/dep": "^1.0.0"},
+        )
+
+        with pytest.raises(ValueError, match="not found in registry"):
+            reg.install(manifest)
+
+
+class TestComputeIntegrity:
+    """Tests for the _compute_integrity helper."""
+
+    def test_deterministic(self, tmp_path: Path) -> None:
+        """Same directory produces same hash."""
+        from promptvault.registry import _compute_integrity
+
+        d = tmp_path / "pkg"
+        d.mkdir()
+        (d / "a.txt").write_text("hello", encoding="utf-8")
+        (d / "b.txt").write_text("world", encoding="utf-8")
+
+        hash1 = _compute_integrity(d)
+        hash2 = _compute_integrity(d)
+        assert hash1 == hash2
+
+    def test_changes_when_file_changes(self, tmp_path: Path) -> None:
+        """Hash changes when file contents change."""
+        from promptvault.registry import _compute_integrity
+
+        d = tmp_path / "pkg"
+        d.mkdir()
+        (d / "a.txt").write_text("hello", encoding="utf-8")
+
+        hash_before = _compute_integrity(d)
+        (d / "a.txt").write_text("modified", encoding="utf-8")
+        hash_after = _compute_integrity(d)
+        assert hash_before != hash_after

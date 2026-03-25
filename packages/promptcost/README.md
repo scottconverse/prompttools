@@ -23,7 +23,7 @@ Token budget and cost estimator for LLM prompts.
 pip install promptcost-ai
 ```
 
-**Dependencies:** prompttools-core-ai >= 1.0, typer >= 0.12, rich >= 13.0
+**Dependencies:** prompttools-core-ai >= 1.0, typer >= 0.12, rich >= 13.0, pydantic >= 2.0
 
 ## CLI Commands
 
@@ -182,6 +182,7 @@ print(f"Pipeline total: ${pipeline_est.total_cost:.4f}")
 - `input_cost`, `output_cost`, `total_cost`
 
 **`CostComparison`** -- Comparison across multiple models.
+- `file_path`, `input_tokens`, `estimated_output_tokens`
 - `estimates: dict[str, CostEstimate]`, `cheapest`, `most_expensive`
 - `savings_vs_most_expensive`
 
@@ -191,7 +192,17 @@ print(f"Pipeline total: ${pipeline_est.total_cost:.4f}")
 **`BudgetResult`** -- Budget check result.
 - `file_path`, `model`, `estimated_cost`, `budget`, `over_budget`, `overage`
 
-**`PipelineCostEstimate`** / **`StageCostEstimate`** -- Pipeline-level cost breakdown.
+**`CostDelta`** -- Cost impact of a prompt change.
+- `file_path`, `model`, `old_estimate`, `new_estimate`
+- `cost_change`, `percent_change`, `monthly_impact` (optional)
+
+**`PipelineCostEstimate`** -- Pipeline-level cost estimate.
+- `pipeline_name`, `model`, `stages: list[StageCostEstimate]`
+- `total_cost`, `cumulative_tokens`
+
+**`StageCostEstimate`** -- Per-stage cost breakdown.
+- `stage_name`, `input_tokens`, `estimated_output_tokens`
+- `input_cost`, `output_cost`, `total_cost`
 
 ## CI Integration
 

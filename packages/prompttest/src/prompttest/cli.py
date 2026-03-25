@@ -86,7 +86,7 @@ def init() -> None:
     """Create an example test file in the current directory."""
     example_content = """\
 # Example prompttest file
-# See https://github.com/prompttools/prompttest for documentation
+# See https://github.com/scottconverse/prompttools for documentation
 suite: example-tests
 prompt: prompts/greeting.yaml
 model: gpt-4o

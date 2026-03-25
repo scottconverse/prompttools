@@ -36,6 +36,10 @@ dev = [
     "pytest-cov",
 ]
 
+[project.urls]
+Homepage = "https://github.com/scottconverse/prompttools"
+Repository = "https://github.com/scottconverse/prompttools"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/prompttest"]
 

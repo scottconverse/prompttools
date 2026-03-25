@@ -189,3 +189,49 @@ class TestResolveDependencies:
         )
         with pytest.raises(DependencyConflictError, match="No version"):
             resolve_dependencies(manifest, reg)
+
+
+class TestFindBestMatchEdgeCases:
+    """Additional edge-case tests for _find_best_match."""
+
+    def test_invalid_version_strings_skipped(self) -> None:
+        """Invalid version strings in the list are gracefully skipped."""
+        spec = _parse_version_range("^1.0.0")
+        versions = ["not-a-version", "1.0.0", "also-bad", "1.2.0"]
+        best = _find_best_match(versions, spec)
+        assert best == "1.2.0"
+
+    def test_all_invalid_returns_none(self) -> None:
+        """When all version strings are invalid, returns None."""
+        spec = _parse_version_range("^1.0.0")
+        versions = ["bad", "worse", "terrible"]
+        best = _find_best_match(versions, spec)
+        assert best is None
+
+
+class TestParseVersionRangeEdgeCases:
+    """Additional edge-case tests for _parse_version_range."""
+
+    def test_whitespace_stripped(self) -> None:
+        """Leading/trailing whitespace is handled."""
+        spec = _parse_version_range("  ^1.2.3  ")
+        assert "1.2.3" in spec
+        assert "1.9.0" in spec
+        assert "2.0.0" not in spec
+
+    def test_whitespace_exact(self) -> None:
+        """Whitespace around exact version."""
+        spec = _parse_version_range("  1.0.0  ")
+        assert "1.0.0" in spec
+        assert "1.0.1" not in spec
+
+
+class TestDependencyConflictError:
+    """Tests for DependencyConflictError."""
+
+    def test_is_exception_subclass(self) -> None:
+        assert issubclass(DependencyConflictError, Exception)
+
+    def test_message_preserved(self) -> None:
+        err = DependencyConflictError("test message")
+        assert str(err) == "test message"

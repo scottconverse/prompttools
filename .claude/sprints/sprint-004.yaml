@@ -1,0 +1,301 @@
+sprint: 4
+title: "promptcost-ai: Verification and hardening for release"
+source: "packages/promptcost/ -- all source, tests, pyproject.toml, README.md"
+created: "2026-03-25"
+scope: medium
+# -------------------------------------------------------------------
+# CURRENT STATE
+# -------------------------------------------------------------------
+# The promptcost package has a complete implementation:
+#   - models.py: 7 Pydantic v2 models (CostEstimate, StageCostEstimate,
+#     PipelineCostEstimate, CostProjection, CostComparison, CostDelta,
+#     BudgetResult)
+#   - estimator.py: estimate_file(), estimate_pipeline(), output heuristics
+#   - comparator.py: compare_models() multi-model comparison
+#   - projector.py: project_cost(), _parse_volume() volume parsing
+#   - budget.py: check_budget() enforcement
+#   - cli.py: Typer CLI with estimate, budget, delta, models commands
+#   - 35 tests across 5 test files + conftest
+#
+# This sprint focuses on VERIFYING correctness, filling test gaps,
+# fixing pyproject.toml metadata, and aligning README with reality.
+# -------------------------------------------------------------------
+
+dependencies:
+  - "prompttools-core-ai>=1.0 must be installed (provides parse_file, PromptFile, Tokenizer, ModelProfile, get_profile, list_profiles)"
+  - "pydantic>=2.0 must be available (used by models.py but NOT listed in pyproject.toml dependencies)"
+
+deliverables:  # -- 1. PYPROJECT.TOML --
+  - file: "packages/promptcost/pyproject.toml"
+    description: "Package metadata with correct monorepo URLs and complete dependencies."
+    action: modify
+    acceptance:
+      - "name is promptcost-ai"
+      - "version is 1.0.0"
+      - "requires-python is >=3.9"
+      - "Development Status classifier is 4 - Beta"
+      - "dependencies include prompttools-core-ai>=1.0,<2.0"
+      - "dependencies include typer[all]>=0.12"
+      - "dependencies include rich>=13.0"
+      - "dependencies include pydantic>=2.0 (models.py imports pydantic but it is missing from deps)"
+      - "[project.urls] section exists with Homepage and Repository pointing to the prompttools monorepo GitHub URL"
+      - "[project.scripts] maps promptcost to promptcost.cli:app"
+      - "[tool.hatch.build.targets.wheel] packages points to promptcost"
+      - "dev extras include pytest>=8.0, pytest-cov"
+
+  # -- 2. DATA MODELS --
+  - file: "packages/promptcost/promptcost/models.py"
+    description: "Pydantic v2 data models for all cost structures."
+    action: modify
+    acceptance:
+      - "CostEstimate has fields: file_path, model, input_tokens, estimated_output_tokens, output_estimation_method, input_cost, output_cost, total_cost"
+      - "CostEstimate.output_estimation_method is Literal[explicit, heuristic, max]"
+      - "StageCostEstimate has fields: stage_name, input_tokens, estimated_output_tokens, input_cost, output_cost, total_cost"
+      - "PipelineCostEstimate has fields: pipeline_name, model, stages, total_cost, cumulative_tokens"
+      - "CostProjection has fields: volume, calls_per_day, daily_cost, monthly_cost, annual_cost"
+      - "CostComparison has fields: file_path, input_tokens, estimated_output_tokens, estimates, cheapest, most_expensive, savings_vs_most_expensive"
+      - "CostDelta has fields: file_path, model, old_estimate, new_estimate, cost_change, percent_change, monthly_impact"
+      - "BudgetResult has fields: file_path, model, estimated_cost, budget, over_budget, overage"
+      - "All 7 models use Pydantic v2 BaseModel"
+      - "CostEstimate roundtrips through model_dump_json() and model_validate_json()"
+  # -- 3. ESTIMATOR --
+  - file: "packages/promptcost/promptcost/estimator.py"
+    description: "Core cost estimation engine for single files and pipelines."
+    action: modify
+    acceptance:
+      - "estimate_file() returns CostEstimate with total_cost == input_cost + output_cost"
+      - "estimate_file() raises ValueError for unknown model names"
+      - "_estimate_output_tokens() returns (N, explicit) when explicit_output_tokens is passed"
+      - "_estimate_output_tokens() returns (N, explicit) when prompt metadata has expected_output_tokens"
+      - "_estimate_output_tokens() returns (500, heuristic) when content contains json or structured"
+      - "_estimate_output_tokens() returns (300, heuristic) when content contains brief or concise"
+      - "_estimate_output_tokens() returns (2000, heuristic) when content contains detailed or comprehensive"
+      - "_estimate_output_tokens() returns (1000, heuristic) for generic content with no keyword matches"
+      - "_estimate_output_tokens() caps heuristic output at profile.max_output_tokens"
+      - "estimate_pipeline() returns PipelineCostEstimate with accumulated context across stages"
+      - "estimate_pipeline() skips stages where prompt_file is None"
+      - "estimate_pipeline() uses stage.expected_output_tokens when > 0"
+
+  # -- 4. COMPARATOR --
+  - file: "packages/promptcost/promptcost/comparator.py"
+    description: "Multi-model cost comparison engine."
+    action: modify
+    acceptance:
+      - "compare_models() returns CostComparison with cheapest and most_expensive set correctly"
+      - "compare_models() raises ValueError when models list is empty"
+      - "compare_models() raises ValueError when all models are unknown (after skipping)"
+      - "compare_models() logs a warning and skips unknown model names without failing"
+      - "compare_models() accepts optional output_tokens override"
+      - "savings_vs_most_expensive equals most_expensive.total_cost minus cheapest.total_cost"
+  # -- 5. PROJECTOR --
+  - file: "packages/promptcost/promptcost/projector.py"
+    description: "Volume-based cost projection calculator."
+    action: modify
+    acceptance:
+      - "_parse_volume(1000/day) returns 1000"
+      - "_parse_volume(100/hour) returns 2400"
+      - "_parse_volume(7000/week) returns 1000"
+      - "_parse_volume(30000/month) returns 1000"
+      - "_parse_volume() raises ValueError for invalid format strings"
+      - "_parse_volume() handles whitespace around slash"
+      - "project_cost() returns CostProjection with monthly_cost == daily_cost * 30"
+      - "project_cost() returns CostProjection with annual_cost == daily_cost * 365"
+
+  # -- 6. BUDGET --
+  - file: "packages/promptcost/promptcost/budget.py"
+    description: "Budget enforcement with pass/fail results."
+    action: modify
+    acceptance:
+      - "check_budget() returns one BudgetResult per estimate"
+      - "check_budget() sets over_budget=True when estimated_cost > budget"
+      - "check_budget() sets over_budget=False when estimated_cost == budget (exact match is within budget)"
+      - "check_budget() sets overage to max(0, estimated_cost - budget)"
+      - "check_budget() handles empty estimates list (returns empty list)"
+  # -- 7. CLI --
+  - file: "packages/promptcost/promptcost/cli.py"
+    description: "Typer CLI entry point with estimate, budget, delta, models commands."
+    action: modify
+    acceptance:
+      - "app is a typer.Typer instance with name=promptcost and no_args_is_help=True"
+      - "promptcost estimate <file> exits 0 and shows cost info"
+      - "promptcost estimate <file> --model gpt-4o uses the specified model"
+      - "promptcost estimate <file> --output-tokens 500 passes explicit token count"
+      - "promptcost estimate <file> --output-tokens 0 or negative value exits with code 2"
+      - "promptcost estimate <file> --compare shows comparison table with Cheapest/Most Expensive"
+      - "promptcost estimate <file> --models gpt-4o,gpt-4o-mini compares specific models"
+      - "promptcost estimate <file> --format json outputs valid JSON with input_tokens and total_cost"
+      - "promptcost estimate <file> --project 1000/day shows Daily/Monthly/Annual projections"
+      - "promptcost estimate <dir> shows table of all files with per-call costs"
+      - "promptcost estimate <nonexistent> exits with code 2"
+      - "promptcost budget <file> --limit 10.0 exits 0 and shows OK for cheap prompts"
+      - "promptcost budget <file> --limit 0.0000001 exits 1 and shows OVER BUDGET"
+      - "promptcost budget <dir> --limit 10.0 checks all files in directory"
+      - "promptcost budget --limit 0 raises BadParameter error"
+      - "promptcost delta <old> <new> exits 0 and shows cost delta info"
+      - "promptcost delta <old> <new> --volume 1000/day shows monthly projection delta"
+      - "promptcost models exits 0 and shows table with pricing columns"
+      - "Directory estimate with --project uses project_cost() consistently, not raw string splitting"
+  # -- 8. __init__.py --
+  - file: "packages/promptcost/promptcost/__init__.py"
+    description: "Public API surface with convenience imports."
+    action: modify
+    acceptance:
+      - "__version__ is 1.0.0"
+      - "Exports all 7 model classes: BudgetResult, CostComparison, CostDelta, CostEstimate, CostProjection, PipelineCostEstimate, StageCostEstimate"
+      - "Exports estimate_file, estimate_pipeline from estimator"
+      - "Exports compare_models from comparator"
+      - "Exports project_cost from projector"
+      - "Exports check_budget from budget"
+      - "__all__ list contains all exported names"
+      - "from promptcost import estimate_file, CostEstimate, compare_models works without error"
+
+  # -- 9. NEW TEST: MODELS --
+  - file: "packages/promptcost/tests/test_models.py"
+    description: "Unit tests for all Pydantic data models -- currently missing entirely."
+    action: create
+    acceptance:
+      - "Minimum 15 test cases"
+      - "Tests CostEstimate construction with all required fields"
+      - "Tests CostEstimate.output_estimation_method accepts only explicit, heuristic, max"
+      - "Tests CostEstimate JSON roundtrip via model_dump_json() and model_validate_json()"
+      - "Tests StageCostEstimate construction"
+      - "Tests PipelineCostEstimate construction with stages list"
+      - "Tests CostProjection construction"
+      - "Tests CostComparison construction with estimates dict"
+      - "Tests CostDelta construction with old/new estimates and percent_change"
+      - "Tests CostDelta.monthly_impact defaults to None"
+      - "Tests BudgetResult construction with over_budget=True and over_budget=False"
+      - "Tests BudgetResult.overage is non-negative"
+  # -- 10. EXISTING TEST: ESTIMATOR --
+  - file: "packages/promptcost/tests/test_estimator.py"
+    description: "Tests for estimator -- needs pipeline tests and heuristic edge cases."
+    action: modify
+    acceptance:
+      - "Minimum 12 test cases (currently 7)"
+      - "Tests estimate_file() returns correct CostEstimate (existing)"
+      - "Tests total_cost == input_cost + output_cost (existing)"
+      - "Tests explicit output tokens override (existing)"
+      - "Tests heuristic output tokens (existing)"
+      - "Tests unknown model raises ValueError (existing)"
+      - "Tests cheaper model costs less than expensive model (existing)"
+      - "NEW: Tests _estimate_output_tokens with json keyword returns 500"
+      - "NEW: Tests _estimate_output_tokens with brief keyword returns 300"
+      - "NEW: Tests _estimate_output_tokens with detailed keyword returns 2000"
+      - "NEW: Tests _estimate_output_tokens with metadata expected_output_tokens uses explicit method"
+      - "NEW: Tests estimate_pipeline() returns PipelineCostEstimate with correct stage count"
+
+  # -- 11. EXISTING TEST: COMPARATOR --
+  - file: "packages/promptcost/tests/test_comparator.py"
+    description: "Tests for comparator -- needs all-unknown-models edge case."
+    action: modify
+    acceptance:
+      - "Minimum 6 test cases (currently 5)"
+      - "Tests cheapest model identification (existing)"
+      - "Tests savings are positive (existing)"
+      - "Tests single model comparison (existing)"
+      - "Tests empty models list raises ValueError (existing)"
+      - "Tests all models present in estimates dict (existing)"
+      - "NEW: Tests all-unknown-models raises ValueError with descriptive message"
+  # -- 12. EXISTING TEST: BUDGET --
+  - file: "packages/promptcost/tests/test_budget.py"
+    description: "Tests for budget -- needs empty-list edge case."
+    action: modify
+    acceptance:
+      - "Minimum 5 test cases (currently 4)"
+      - "Tests within budget (existing)"
+      - "Tests over budget (existing)"
+      - "Tests multiple files (existing)"
+      - "Tests exact budget boundary (existing)"
+      - "NEW: Tests empty estimates list returns empty results list"
+
+  # -- 13. EXISTING TEST: PROJECTOR --
+  - file: "packages/promptcost/tests/test_projector.py"
+    description: "Tests for projector -- already solid, verify completeness."
+    action: modify
+    acceptance:
+      - "Minimum 7 test cases (currently 7)"
+      - "Tests _parse_volume for day, hour, week, month"
+      - "Tests _parse_volume invalid format raises ValueError"
+      - "Tests projection math (daily, monthly, annual)"
+      - "Tests volume string is preserved in result"
+
+  # -- 14. EXISTING TEST: CLI --
+  - file: "packages/promptcost/tests/test_cli.py"
+    description: "CLI tests -- needs directory estimate test, error edge cases, and negative output-tokens."
+    action: modify
+    acceptance:
+      - "Minimum 25 test cases (currently 20)"
+      - "All existing test classes and cases continue to pass"
+      - "NEW: Tests estimate on a directory shows table with multiple files"
+      - "NEW: Tests estimate with --output-tokens 0 or negative exits with code 2"
+      - "NEW: Tests budget with --limit 0 fails with BadParameter"
+      - "NEW: Tests delta with --output-tokens passes explicit count"
+      - "NEW: Tests estimate --compare --format json returns valid JSON with estimates key"
+  # -- 15. README --
+  - file: "packages/promptcost/README.md"
+    description: "Documentation must match actual features and test counts."
+    action: modify
+    acceptance:
+      - "Installation command is pip install promptcost-ai"
+      - "All CLI commands documented (estimate, budget, delta, models) match actual CLI implementation"
+      - "Programmatic usage examples use correct function signatures matching __init__.py exports"
+      - "Data Models section lists all 7 models with correct field names"
+      - "CostDelta model is documented (currently listed but verify fields match models.py)"
+      - "Volume projection table matches _parse_volume() behavior"
+      - "Output token estimation heuristic table matches _estimate_output_tokens() keywords"
+      - "Exit codes table is accurate (0=success, 1=over budget, 2=error)"
+      - "No placeholder URLs remain"
+      - "Dependencies listed match pyproject.toml (must add pydantic after pyproject fix)"
+
+constraints:
+  - "Use Pydantic v2 BaseModel for all data classes"
+  - "Use Typer for CLI with Rich console for terminal output"
+  - "Use hatchling as build backend"
+  - "Flat source layout: promptcost/ (not src/promptcost/)"
+  - "All imports from prompttools-core use: from prompttools_core import ..."
+  - "All tests use pytest (no unittest)"
+  - "Development Status classifier must be 4 - Beta"
+  - "Do NOT rewrite files that already meet acceptance criteria -- only modify what fails"
+  - "Minimum 45 test cases total across all test files after this sprint (currently ~35)"
+notes: |
+  The promptcost package is ALREADY IMPLEMENTED. This sprint is verification and hardening.
+
+  KEY ISSUES FOUND DURING ANALYSIS:
+
+  1. MISSING DEPENDENCY: pydantic is imported in models.py but not listed in
+     pyproject.toml dependencies. It works because prompttools-core likely pulls
+     it in transitively, but it must be declared explicitly.
+
+  2. MISSING URLs: pyproject.toml has no [project.urls] section. Must add
+     Homepage and Repository pointing to the monorepo.
+
+  3. NO MODEL TESTS: There is no test_models.py file. All 7 Pydantic models
+     are completely untested in isolation. The models work (tested indirectly
+     through estimator/budget/etc.), but there are no construction, validation,
+     or serialization tests.
+
+  4. NO PIPELINE TESTS: estimate_pipeline() has zero test coverage despite
+     being exported in __init__.py and documented in README.
+
+  5. CostDelta UNUSED IN CLI: The CostDelta model is defined in models.py and
+     exported in __init__.py, but the CLI delta command constructs its values
+     inline rather than using the model. Verify whether the model should be
+     used or if the inline approach is intentional.
+
+  6. CLI DIRECTORY VOLUME BUG: In cli.py lines 153-155, directory estimate with
+     --project uses raw string splitting instead of calling _parse_volume().
+     This means it only handles N/day format, not N/hour, N/week, or N/month.
+     The Builder should fix this to use project_cost() consistently.
+
+  7. _parse_volume INTEGER TRUNCATION: For 200/week, the calculation is
+     int(200 * (1/7)) = int(28.57) = 28, which silently truncates. Consider
+     whether this is acceptable or if rounding is preferred.
+
+  The Builder should:
+  - Run pytest first to see what passes and what fails
+  - Fix pyproject.toml metadata issues
+  - Create test_models.py with model-level tests
+  - Add pipeline test coverage
+  - Add CLI edge case tests
+  - Fix the directory volume projection bug in cli.py
+  - Update README if any features or deps change

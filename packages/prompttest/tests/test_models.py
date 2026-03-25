@@ -95,6 +95,22 @@ class TestTestCase:
         assert tc.variables == ["user_name", "language"]
 
 
+class TestValidateBounds:
+    """Tests for PromptTestCase._validate_bounds validator."""
+
+    def test_rejects_negative_max(self) -> None:
+        with pytest.raises(ValueError, match="'max' must be non-negative"):
+            PromptTestCase(name="t", assert_type=AssertionType.MAX_TOKENS, max=-1)
+
+    def test_rejects_negative_min(self) -> None:
+        with pytest.raises(ValueError, match="'min' must be non-negative"):
+            PromptTestCase(name="t", assert_type=AssertionType.MIN_TOKENS, min=-5)
+
+    def test_rejects_negative_ratio_max(self) -> None:
+        with pytest.raises(ValueError, match="'ratio_max' must be non-negative"):
+            PromptTestCase(name="t", assert_type=AssertionType.TOKEN_RATIO, ratio_max=-0.5)
+
+
 class TestAssertionResult:
     """Tests for the AssertionResult model."""
 

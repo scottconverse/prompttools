@@ -1,7 +1,13 @@
-Update docs, planner skill, and memory for sprint 001 results
+Harness-driven hardening of all 6 packages
 
-Added release sprint constraint to harness-plan skill.
-Updated MEMORY.md with promptdiff test count (116) and total (634).
-All docs verified accurate - no other changes needed.
+Ran Planner-Builder-Evaluator loop on every package. Results:
+- prompttools-core: 108->211 tests, 2 new test files, URLs added
+- promptfmt: 48->104 tests, 4 new test files, watchfiles dep removed
+- promptcost: 35->79 tests, 3 bugs fixed (volume parsing, pydantic dep, truncation)
+- prompttest: 137->146 tests, 7 gaps filled, URLs added
+- promptvault: 75->99 tests, URLs added, README updated
+- promptdiff: 102->116 tests (done in earlier sprint)
+
+Total test count: 755 (up from ~403). All 6 Evaluators passed.
 
 Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>

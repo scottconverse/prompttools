@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from prompttools_core.config import find_config_file, load_config
+from prompttools_core.errors import ConfigError
 from prompttools_core.models import ToolConfig
 
 
@@ -78,3 +79,73 @@ class TestFindConfigFile:
         result = find_config_file(tmp_path, tool_name="fmt")
         assert result is not None
         assert result.name == ".promptfmt.yaml"
+
+    def test_accepts_file_path(self, tmp_path):
+        config_file = tmp_path / ".prompttools.yaml"
+        config_file.write_text("model: gpt-4\n", encoding="utf-8")
+        some_file = tmp_path / "prompt.yaml"
+        some_file.write_text("messages: []\n", encoding="utf-8")
+        # find_config_file should resolve file path to parent dir
+        result = find_config_file(some_file)
+        assert result is not None
+        assert result.name == ".prompttools.yaml"
+
+
+class TestLoadConfigEdgeCases:
+    def test_model_resolves_tokenizer_encoding(self, tmp_path):
+        config_file = tmp_path / ".prompttools.yaml"
+        config_file.write_text("model: gpt-4\n", encoding="utf-8")
+        config = load_config("test", start_dir=tmp_path)
+        assert config.model == "gpt-4"
+        assert config.tokenizer_encoding == "cl100k_base"
+
+    def test_tool_specific_section_merges_into_extra(self, tmp_path):
+        config_file = tmp_path / ".prompttools.yaml"
+        config_file.write_text(
+            "model: gpt-4\nfmt:\n  delimiter_style: '###'\n  wrap: 80\n",
+            encoding="utf-8",
+        )
+        config = load_config("fmt", start_dir=tmp_path)
+        assert config.extra.get("delimiter_style") == "###"
+        assert config.extra.get("wrap") == 80
+
+    def test_invalid_yaml_raises_config_error(self, tmp_path):
+        config_file = tmp_path / ".prompttools.yaml"
+        config_file.write_text("{{: invalid yaml", encoding="utf-8")
+        with pytest.raises(ConfigError, match="Invalid YAML"):
+            load_config("test", config_path=config_file)
+
+    def test_empty_yaml_returns_defaults(self, tmp_path):
+        config_file = tmp_path / ".prompttools.yaml"
+        config_file.write_text("", encoding="utf-8")
+        config = load_config("test", config_path=config_file)
+        assert isinstance(config, ToolConfig)
+        assert config.model is None
+        assert config.exclude == []
+
+    def test_non_mapping_yaml_raises_config_error(self, tmp_path):
+        config_file = tmp_path / ".prompttools.yaml"
+        config_file.write_text("- item1\n- item2\n", encoding="utf-8")
+        with pytest.raises(ConfigError, match="mapping"):
+            load_config("test", config_path=config_file)
+
+    def test_cache_section(self, tmp_path):
+        config_file = tmp_path / ".prompttools.yaml"
+        config_file.write_text(
+            "cache:\n  enabled: true\n  dir: my-cache\n",
+            encoding="utf-8",
+        )
+        config = load_config("test", config_path=config_file)
+        assert config.cache_enabled is True
+        assert config.cache_dir == Path("my-cache")
+
+    def test_cli_overrides_take_priority_over_file(self, tmp_path):
+        config_file = tmp_path / ".prompttools.yaml"
+        config_file.write_text("model: gpt-4\n", encoding="utf-8")
+        config = load_config(
+            "test",
+            start_dir=tmp_path,
+            cli_overrides={"model": "gpt-4o", "cache_enabled": True},
+        )
+        assert config.model == "gpt-4o"
+        assert config.cache_enabled is True

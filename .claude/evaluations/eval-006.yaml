@@ -1,0 +1,425 @@
+sprint: 6
+evaluator_verdict: PASS
+loop_iteration: 1
+max_loops: 3
+timestamp: "2026-03-25 12:00"
+
+test_results:
+  total: 99
+  passed: 99
+  failed: 0
+  warnings: 0
+  warning_details: "None"
+
+acceptance_criteria:
+  # -- 1. PYPROJECT.TOML --
+  - criterion: "name is promptvault-ai"
+    status: PASS
+    evidence: "pyproject.toml line 6"
+  - criterion: "version is 1.0.0"
+    status: PASS
+    evidence: "pyproject.toml line 7"
+  - criterion: "requires-python is >=3.9"
+    status: PASS
+    evidence: "pyproject.toml line 11"
+  - criterion: "Development Status classifier is 4 - Beta"
+    status: PASS
+    evidence: "pyproject.toml line 14"
+  - criterion: "dependencies include prompttools-core-ai>=1.0,<2.0"
+    status: PASS
+    evidence: "pyproject.toml line 25"
+  - criterion: "dependencies include typer[all]>=0.12"
+    status: PASS
+    evidence: "pyproject.toml line 26"
+  - criterion: "dependencies include pyyaml>=6.0"
+    status: PASS
+    evidence: "pyproject.toml line 27"
+  - criterion: "dependencies include rich>=13.0"
+    status: PASS
+    evidence: "pyproject.toml line 28"
+  - criterion: "dependencies include packaging>=23.0"
+    status: PASS
+    evidence: "pyproject.toml line 29"
+  - criterion: "[project.scripts] maps promptvault to promptvault.cli:app"
+    status: PASS
+    evidence: "pyproject.toml line 33"
+  - criterion: "[tool.hatch.build.targets.wheel] packages points to src/promptvault"
+    status: PASS
+    evidence: "pyproject.toml line 48"
+  - criterion: "dev extras include pytest>=8.0, pytest-cov, ruff, mypy"
+    status: PASS
+    evidence: "pyproject.toml lines 37-41"
+  - criterion: "[project.urls] Homepage is https://github.com/scottconverse/prompttools"
+    status: PASS
+    evidence: "pyproject.toml line 44"
+  - criterion: "[project.urls] Repository is https://github.com/scottconverse/prompttools"
+    status: PASS
+    evidence: "pyproject.toml line 45"
+
+  # -- 2. DATA MODELS --
+  - criterion: "PromptEntry has required fields: file (Path), name (str)"
+    status: PASS
+    evidence: "models.py lines 18-19: Field(...) for both"
+  - criterion: "PromptEntry optional fields: description default empty, variables default [], model default None"
+    status: PASS
+    evidence: "models.py lines 20-26"
+  - criterion: "QualityConfig fields default to optional"
+    status: PASS
+    evidence: "models.py lines 32-36"
+  - criterion: "PackageManifest has required fields: name, version, description, author"
+    status: PASS
+    evidence: "models.py lines 42-45: all use Field(...)"
+  - criterion: "PackageManifest optional fields have correct defaults"
+    status: PASS
+    evidence: "models.py lines 46-59"
+  - criterion: "PackageManifest.dependencies defaults to empty dict"
+    status: PASS
+    evidence: "models.py line 53: default_factory=dict"
+  - criterion: "PackageManifest.quality defaults to QualityConfig()"
+    status: PASS
+    evidence: "models.py line 57: default_factory=QualityConfig"
+  - criterion: "CatalogEntry required fields: name, latest_version, published_at, integrity"
+    status: PASS
+    evidence: "models.py: all four use Field(...)"
+  - criterion: "CatalogEntry.model defaults to None"
+    status: PASS
+    evidence: "models.py line 71"
+  - criterion: "CatalogEntry.total_prompts defaults to 0"
+    status: PASS
+    evidence: "models.py line 74"
+  - criterion: "LockEntry has required fields: version, integrity, resolved"
+    status: PASS
+    evidence: "models.py lines 81-86"
+  - criterion: "Lockfile.lockfile_version defaults to 1"
+    status: PASS
+    evidence: "models.py line 92"
+  - criterion: "Lockfile.resolved defaults to empty dict"
+    status: PASS
+    evidence: "models.py line 93"
+  - criterion: "All models use Pydantic v2 BaseModel"
+    status: PASS
+    evidence: "models.py line 12: from pydantic import BaseModel, Field"
+  - criterion: "PackageManifest roundtrips through model_dump/model_validate"
+    status: PASS
+    evidence: "test_models.py test_roundtrip verifies"
+
+  # -- 3. LOCAL REGISTRY --
+  - criterion: "LocalRegistry.__init__() creates registry_dir and packages_dir"
+    status: PASS
+    evidence: "registry.py lines 78-79"
+  - criterion: "LocalRegistry.__init__() accepts optional registry_dir"
+    status: PASS
+    evidence: "registry.py line 75: Optional[Path] = None"
+  - criterion: "publish() reads manifest, copies files, computes integrity, updates index"
+    status: PASS
+    evidence: "registry.py lines 94-143"
+  - criterion: "publish() raises FileNotFoundError when manifest missing"
+    status: PASS
+    evidence: "registry.py line 54"
+  - criterion: "publish() raises ValueError when version exists"
+    status: PASS
+    evidence: "registry.py lines 98-101"
+  - criterion: "publish() skips __pycache__ and .git"
+    status: PASS
+    evidence: "registry.py line 108"
+  - criterion: "install() calls resolve_dependencies and returns LockEntry list"
+    status: PASS
+    evidence: "registry.py lines 157-176"
+  - criterion: "install() raises ValueError when package not on disk"
+    status: PASS
+    evidence: "registry.py lines 164-167"
+  - criterion: "search() is case-insensitive, matches name and description"
+    status: PASS
+    evidence: "registry.py lines 189-194"
+  - criterion: "search() returns empty list when no matches"
+    status: PASS
+    evidence: "registry.py: starts with empty list"
+  - criterion: "info() returns CatalogEntry for existing package"
+    status: PASS
+    evidence: "registry.py line 213"
+  - criterion: "info() raises KeyError for missing package"
+    status: PASS
+    evidence: "registry.py line 212"
+  - criterion: "list_packages() returns all CatalogEntry objects"
+    status: PASS
+    evidence: "registry.py line 222"
+  - criterion: "list_packages() returns empty list for empty registry"
+    status: PASS
+    evidence: "Empty index yields empty list"
+  - criterion: "get_versions() returns list of version strings"
+    status: PASS
+    evidence: "registry.py line 237"
+  - criterion: "get_versions() raises KeyError for missing package"
+    status: PASS
+    evidence: "Delegates to info() which raises KeyError"
+  - criterion: "get_package_dir() returns Path to version directory"
+    status: PASS
+    evidence: "registry.py line 257"
+  - criterion: "get_package_dir() raises FileNotFoundError for missing version"
+    status: PASS
+    evidence: "registry.py lines 253-256"
+  - criterion: "_compute_integrity() produces deterministic SHA-256 hashes"
+    status: PASS
+    evidence: "registry.py lines 24-32"
+
+  # -- 4. DEPENDENCY RESOLVER --
+  - criterion: "_parse_version_range exact version produces ==1.2.3"
+    status: PASS
+    evidence: "resolver.py lines 52-56"
+  - criterion: "_parse_version_range caret ^1.2.3 produces >=1.2.3,<2.0.0"
+    status: PASS
+    evidence: "resolver.py lines 34-43"
+  - criterion: "_parse_version_range caret ^0.2.3 produces >=0.2.3,<0.3.0"
+    status: PASS
+    evidence: "resolver.py lines 39-40"
+  - criterion: "_parse_version_range caret ^0.0.3 produces >=0.0.3,<0.0.4"
+    status: PASS
+    evidence: "resolver.py lines 41-42"
+  - criterion: "_parse_version_range tilde ~1.2.3 produces >=1.2.3,<1.3.0"
+    status: PASS
+    evidence: "resolver.py lines 45-49"
+  - criterion: "_parse_version_range PEP 440 produces standard specifier"
+    status: PASS
+    evidence: "resolver.py line 60"
+  - criterion: "_find_best_match() returns highest matching version"
+    status: PASS
+    evidence: "resolver.py lines 86-87"
+  - criterion: "_find_best_match() returns None when no match"
+    status: PASS
+    evidence: "resolver.py lines 84-85"
+  - criterion: "_find_best_match() skips invalid version strings"
+    status: PASS
+    evidence: "resolver.py lines 78-80"
+  - criterion: "resolve_dependencies() returns empty dict for no dependencies"
+    status: PASS
+    evidence: "Empty dependencies yields empty result"
+  - criterion: "resolve_dependencies() raises DependencyConflictError for missing dep"
+    status: PASS
+    evidence: "resolver.py lines 116-119"
+  - criterion: "resolve_dependencies() raises DependencyConflictError for unsatisfiable range"
+    status: PASS
+    evidence: "resolver.py lines 121-125"
+  - criterion: "resolve_dependencies() resolves multiple dependencies correctly"
+    status: PASS
+    evidence: "test_resolver.py test_resolve_multiple_deps"
+  - criterion: "DependencyConflictError is an Exception subclass"
+    status: PASS
+    evidence: "resolver.py line 19"
+
+  # -- 5. LOCKFILE MANAGEMENT --
+  - criterion: "generate_lockfile() returns Lockfile with lockfile_version=1"
+    status: PASS
+    evidence: "lockfile.py line 47"
+  - criterion: "generate_lockfile() produces LockEntry with integrity hash"
+    status: PASS
+    evidence: "lockfile.py lines 38-45"
+  - criterion: "generate_lockfile() returns empty resolved for no dependencies"
+    status: PASS
+    evidence: "Empty resolved yields empty entries"
+  - criterion: "write_lockfile() writes JSON with indent=2"
+    status: PASS
+    evidence: "lockfile.py line 60"
+  - criterion: "write_lockfile() creates parent directories"
+    status: PASS
+    evidence: "lockfile.py line 58"
+  - criterion: "read_lockfile() returns Lockfile from JSON"
+    status: PASS
+    evidence: "lockfile.py lines 78-79"
+  - criterion: "read_lockfile() raises FileNotFoundError"
+    status: PASS
+    evidence: "lockfile.py lines 76-77"
+  - criterion: "write/read roundtrip preserves all data"
+    status: PASS
+    evidence: "test_lockfile.py test_write_read_roundtrip"
+  - criterion: "verify_lockfile() returns True for valid entries"
+    status: PASS
+    evidence: "lockfile.py lines 95-105"
+  - criterion: "verify_lockfile() returns False for missing package"
+    status: PASS
+    evidence: "lockfile.py lines 98-99"
+  - criterion: "verify_lockfile() returns False for tampered integrity"
+    status: PASS
+    evidence: "lockfile.py lines 101-102"
+  - criterion: "verify_lockfile() returns True for empty lockfile"
+    status: PASS
+    evidence: "Empty resolved skips loop, returns True"
+
+  # -- 6. CLI --
+  - criterion: "app is typer.Typer with name=promptvault, no_args_is_help=True"
+    status: PASS
+    evidence: "cli.py lines 24-28"
+  - criterion: "init creates promptvault.yaml with defaults"
+    status: PASS
+    evidence: "cli.py lines 64-81; tested"
+  - criterion: "init exits code 1 when manifest exists"
+    status: PASS
+    evidence: "cli.py lines 58-62; tested"
+  - criterion: "publish exits 0 and prints name@version"
+    status: PASS
+    evidence: "cli.py line 112; tested"
+  - criterion: "publish --format json outputs valid JSON"
+    status: PASS
+    evidence: "cli.py line 110; tested"
+  - criterion: "publish exits 1 when manifest missing"
+    status: PASS
+    evidence: "cli.py lines 102-104; tested"
+  - criterion: "publish exits 1 when version exists"
+    status: PASS
+    evidence: "cli.py lines 105-107; tested"
+  - criterion: "install exits 0 and writes lockfile"
+    status: PASS
+    evidence: "cli.py lines 149-159; tested"
+  - criterion: "install prints No dependencies when none"
+    status: PASS
+    evidence: "cli.py lines 139-141; tested"
+  - criterion: "install exits 1 on dependency resolution failure"
+    status: PASS
+    evidence: "cli.py lines 143-147: catches DependencyConflictError, exits 1. Code verified correct."
+  - criterion: "search shows table with matches"
+    status: PASS
+    evidence: "cli.py lines 183-196; tested"
+  - criterion: "search shows No packages when no matches"
+    status: PASS
+    evidence: "cli.py line 177; tested"
+  - criterion: "search --format json outputs JSON array"
+    status: PASS
+    evidence: "cli.py line 181; tested"
+  - criterion: "info shows package details"
+    status: PASS
+    evidence: "cli.py lines 221-228; tested"
+  - criterion: "info exits 1 for missing package"
+    status: PASS
+    evidence: "cli.py lines 214-216; tested"
+  - criterion: "list shows table of packages"
+    status: PASS
+    evidence: "cli.py lines 251-264; tested"
+  - criterion: "list shows No packages for empty registry"
+    status: PASS
+    evidence: "cli.py lines 244-245; tested"
+  - criterion: "verify exits 0 for valid lockfile"
+    status: PASS
+    evidence: "cli.py line 296; tested"
+  - criterion: "verify exits 1 for missing lockfile"
+    status: PASS
+    evidence: "cli.py lines 286-288; tested"
+  - criterion: "All commands accept --registry option"
+    status: PASS
+    evidence: "All relevant commands have --registry/-r"
+  - criterion: "All commands accept --format text|json option"
+    status: PASS
+    evidence: "publish, install, search, info, list, verify all have --format/-f"
+
+  # -- 7. __init__.py --
+  - criterion: "__version__ is 1.0.0"
+    status: PASS
+    evidence: "Verified via import"
+  - criterion: "Exports all 6 model classes"
+    status: PASS
+    evidence: "__init__.py lines 14-21"
+  - criterion: "Exports LocalRegistry"
+    status: PASS
+    evidence: "__init__.py line 22"
+  - criterion: "Exports DependencyConflictError and resolve_dependencies"
+    status: PASS
+    evidence: "__init__.py line 23"
+  - criterion: "Exports lockfile functions"
+    status: PASS
+    evidence: "__init__.py lines 8-13"
+  - criterion: "__all__ matches all exports exactly"
+    status: PASS
+    evidence: "Verified programmatically: 13 exports match"
+  - criterion: "from promptvault import LocalRegistry, PackageManifest, resolve_dependencies works"
+    status: PASS
+    evidence: "Verified via Python import"
+
+  # -- 8-12. TEST FILES --
+  - criterion: "test_models.py minimum 15 tests"
+    status: PASS
+    evidence: "20 test cases"
+  - criterion: "test_registry.py minimum 24 tests"
+    status: PASS
+    evidence: "25 test cases"
+  - criterion: "test_resolver.py minimum 18 tests"
+    status: PASS
+    evidence: "22 test cases"
+  - criterion: "test_lockfile.py minimum 12 tests"
+    status: PASS
+    evidence: "12 test cases"
+  - criterion: "test_cli.py minimum 20 tests"
+    status: PASS
+    evidence: "20 test cases"
+  - criterion: "All specific test coverage requirements met per sprint contract"
+    status: PASS
+    evidence: "Each test file covers all items listed in sections 8-12"
+
+  # -- 13. CONFTEST --
+  - criterion: "All 5 fixtures present and used"
+    status: PASS
+    evidence: "sample_manifest, sample_manifest_with_deps, manifest_dir, registry, populated_registry all present and used"
+
+  # -- 14. README --
+  - criterion: "Install command is pip install promptvault-ai"
+    status: PASS
+    evidence: "README.md line 16"
+  - criterion: "Features section lists all 5 features"
+    status: PASS
+    evidence: "README.md lines 7-11"
+  - criterion: "CLI Reference lists all 7 commands"
+    status: PASS
+    evidence: "README.md lines 82-90"
+  - criterion: "Version Ranges table documents all 4 types"
+    status: PASS
+    evidence: "README.md lines 101-106"
+  - criterion: "Python API shows correct imports"
+    status: PASS
+    evidence: "README.md lines 110-124"
+  - criterion: "No placeholder URLs or emails"
+    status: PASS
+    evidence: "Only real GitHub URLs"
+  - criterion: "Links to prompttools monorepo"
+    status: PASS
+    evidence: "README.md lines 1 and 138"
+  - criterion: "Mentions test count (minimum 85)"
+    status: PASS
+    evidence: "README.md line 129: 99 tests"
+  - criterion: "Part of the prompttools suite mentioned"
+    status: PASS
+    evidence: "README.md line 138"
+
+additional_findings:
+  - severity: MEDIUM
+    file: "packages/promptvault/tests/test_cli.py"
+    location: "TestInstall class"
+    finding: "No CLI test for install failure path (dependency resolution failure exiting code 1). Code handles it correctly but no test exercises this path."
+    suggestion: "Add a test invoking install with an unresolvable dependency and assert exit_code == 1."
+  - severity: LOW
+    file: "packages/promptvault/tests/test_cli.py"
+    location: "TestInstall and TestVerify classes"
+    finding: "No CLI tests for install --format json or verify --format json output."
+    suggestion: "Add tests for these --format json paths."
+  - severity: LOW
+    file: "packages/promptvault/src/promptvault/cli.py"
+    location: "init command, line 73"
+    finding: "Quality field uses hardcoded dict instead of QualityConfig model defaults."
+    suggestion: "Use QualityConfig().model_dump() for the quality section."
+  - severity: LOW
+    file: "packages/promptvault/src/promptvault/registry.py"
+    location: "_compute_integrity function"
+    finding: "Empty directories produce identical integrity hashes."
+    suggestion: "Include directory name or sentinel to differentiate empty packages."
+
+blind_spots:
+  - "No CLI test for install failure (dependency resolution error returning exit code 1)"
+  - "No CLI tests for install --format json or verify --format json output"
+  - "No test for corrupted or invalid JSON in index.json"
+  - "No test for concurrent publish operations (race condition on index.json)"
+  - "No test for unicode in package names or file paths"
+  - "No test verifying __pycache__ and .git directories are actually skipped during publish"
+
+summary: |
+  The promptvault package meets all acceptance criteria in the sprint contract. All 99 tests
+  pass with zero failures and zero warnings. Every deliverable file is present and correctly
+  implemented. The code is clean, well-structured, uses Pydantic v2 properly, and the CLI
+  handles error cases with appropriate exit codes. The one notable gap is the missing CLI test
+  for install failure (dependency resolution error), but the underlying code handles it correctly
+  and no CRITICAL findings exist. This is solid work ready for release.

@@ -167,3 +167,42 @@ class TestVerifyLockfile:
         reg = LocalRegistry(registry_dir=tmp_path / "reg")
         lockfile = Lockfile()
         assert verify_lockfile(lockfile, reg) is True
+
+
+class TestLockfileEdgeCases:
+    """Additional edge-case tests for lockfile operations."""
+
+    def test_generate_lockfile_missing_package_dir(self, tmp_path: Path) -> None:
+        """generate_lockfile raises FileNotFoundError when package dir missing."""
+        reg = LocalRegistry(registry_dir=tmp_path / "reg")
+        manifest = PackageManifest(
+            name="@test/app",
+            version="1.0.0",
+            description="App",
+            author="Test",
+        )
+        # Reference a package version that does not exist on disk
+        resolved = {"@test/missing": "1.0.0"}
+        with pytest.raises(FileNotFoundError):
+            generate_lockfile(manifest, resolved, reg)
+
+    def test_write_lockfile_valid_json(self, tmp_path: Path) -> None:
+        """write_lockfile output is parseable by json.loads()."""
+        import json as json_mod
+
+        lockfile = Lockfile(
+            resolved={
+                "@test/pkg": LockEntry(
+                    version="2.0.0",
+                    integrity="sha256abc",
+                    resolved="/some/path",
+                )
+            }
+        )
+        lockfile_path = tmp_path / "promptvault.lock"
+        write_lockfile(lockfile, lockfile_path)
+
+        raw = lockfile_path.read_text(encoding="utf-8")
+        data = json_mod.loads(raw)
+        assert data["lockfile_version"] == 1
+        assert "@test/pkg" in data["resolved"]

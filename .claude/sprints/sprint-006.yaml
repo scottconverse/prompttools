@@ -1,0 +1,342 @@
+sprint: 6
+title: "promptvault-ai: Verification and hardening sprint"
+source: "packages/promptvault/ -- all source and test files"
+created: "2026-03-25"
+scope: medium
+# -------------------------------------------------------------------
+# CURRENT STATE
+# -------------------------------------------------------------------
+# The promptvault package has a complete implementation:
+#   - models.py: 6 Pydantic v2 models (PromptEntry, QualityConfig,
+#     PackageManifest, CatalogEntry, LockEntry, Lockfile)
+#   - registry.py: LocalRegistry class with publish, install, search,
+#     info, list_packages, get_versions, get_package_dir + helpers
+#   - resolver.py: Dependency resolution with semver ranges (caret,
+#     tilde, PEP 440), _parse_version_range, _find_best_match
+#   - lockfile.py: generate_lockfile, write_lockfile, read_lockfile,
+#     verify_lockfile
+#   - cli.py: Typer CLI with 7 commands (init, publish, install,
+#     search, info, list, verify)
+#   - __init__.py: Public API exports, __version__ = "1.0.0"
+#   - 75 tests across 5 test files + conftest.py
+#
+# This sprint VERIFIES everything, fills test gaps, and hardens
+# pyproject.toml and README for release.
+# -------------------------------------------------------------------
+
+dependencies:
+  - "prompttools-core-ai>=1.0 must be installed"
+  - "packaging library must be available (declared in pyproject.toml)"
+  - "pyyaml, typer, rich must be available"
+deliverables:
+  # -- 1. PYPROJECT.TOML ----------------------------------------
+  - file: "packages/promptvault/pyproject.toml"
+    description: "Package metadata and build configuration for promptvault-ai."
+    action: modify
+    acceptance:
+      - "name is promptvault-ai"
+      - "version is 1.0.0"
+      - "requires-python is >=3.9"
+      - "Development Status classifier is 4 - Beta"
+      - "dependencies include prompttools-core-ai>=1.0,<2.0"
+      - "dependencies include typer[all]>=0.12"
+      - "dependencies include pyyaml>=6.0"
+      - "dependencies include rich>=13.0"
+      - "dependencies include packaging>=23.0"
+      - "[project.scripts] maps promptvault to promptvault.cli:app"
+      - "[tool.hatch.build.targets.wheel] packages points to src/promptvault"
+      - "dev extras include pytest>=8.0, pytest-cov, ruff, mypy"
+      - "[project.urls] section exists with Homepage and Repository pointing to prompttools monorepo"
+      - "[project.urls] Homepage is https://github.com/scottconverse/prompttools"
+      - "[project.urls] Repository is https://github.com/scottconverse/prompttools"
+  # -- 2. DATA MODELS -------------------------------------------
+  - file: "packages/promptvault/src/promptvault/models.py"
+    description: "Pydantic v2 data models for all vault structures."
+    action: modify
+    acceptance:
+      - "PromptEntry has required fields: file (Path), name (str)"
+      - "PromptEntry has optional fields: description (default empty string), variables (default []), model (default None)"
+      - "QualityConfig has fields: lint, test, format all defaulting to optional"
+      - "PackageManifest has required fields: name, version, description, author"
+      - "PackageManifest has optional fields: license, model, prompts, dependencies, quality"
+      - "PackageManifest.dependencies defaults to empty dict"
+      - "PackageManifest.quality defaults to QualityConfig()"
+      - "CatalogEntry has required fields: name, latest_version, published_at, integrity"
+      - "CatalogEntry.model defaults to None"
+      - "CatalogEntry.total_prompts defaults to 0"
+      - "LockEntry has required fields: version, integrity, resolved"
+      - "Lockfile.lockfile_version defaults to 1"
+      - "Lockfile.resolved defaults to empty dict"
+      - "All models use Pydantic v2 BaseModel (Field from pydantic, not v1)"
+      - "PackageManifest roundtrips through model_dump(mode=json) and model_validate()"
+  # -- 3. LOCAL REGISTRY ----------------------------------------
+  - file: "packages/promptvault/src/promptvault/registry.py"
+    description: "File-system-based local registry for prompt packages."
+    action: modify
+    acceptance:
+      - "LocalRegistry.__init__() creates registry_dir and packages_dir"
+      - "LocalRegistry.__init__() accepts optional registry_dir (defaults to ~/.promptvault/registry)"
+      - "publish() reads manifest, copies files, computes integrity, updates index.json"
+      - "publish() raises FileNotFoundError when promptvault.yaml is missing"
+      - "publish() raises ValueError when version already exists"
+      - "publish() skips __pycache__ and .git directories when copying"
+      - "install() calls resolve_dependencies and returns list of LockEntry objects"
+      - "install() raises ValueError when resolved package not found on disk"
+      - "search() is case-insensitive and matches both name and description"
+      - "search() returns empty list when no matches found"
+      - "info() returns CatalogEntry for existing package"
+      - "info() raises KeyError for missing package"
+      - "list_packages() returns all CatalogEntry objects"
+      - "list_packages() returns empty list for empty registry"
+      - "get_versions() returns list of version strings"
+      - "get_versions() raises KeyError for missing package"
+      - "get_package_dir() returns Path to specific version directory"
+      - "get_package_dir() raises FileNotFoundError for missing version"
+      - "_compute_integrity() produces deterministic SHA-256 hashes"
+  # -- 4. DEPENDENCY RESOLVER -----------------------------------
+  - file: "packages/promptvault/src/promptvault/resolver.py"
+    description: "Dependency resolution with semver support."
+    action: modify
+    acceptance:
+      - "_parse_version_range with exact version 1.2.3 produces ==1.2.3"
+      - "_parse_version_range with caret ^1.2.3 produces >=1.2.3,<2.0.0"
+      - "_parse_version_range with caret ^0.2.3 produces >=0.2.3,<0.3.0"
+      - "_parse_version_range with caret ^0.0.3 produces >=0.0.3,<0.0.4"
+      - "_parse_version_range with tilde ~1.2.3 produces >=1.2.3,<1.3.0"
+      - "_parse_version_range with PEP 440 >=1.0,<2.0 produces standard specifier"
+      - "_find_best_match() returns highest matching version"
+      - "_find_best_match() returns None when no versions match"
+      - "_find_best_match() skips invalid version strings gracefully"
+      - "resolve_dependencies() returns empty dict for manifest with no dependencies"
+      - "resolve_dependencies() raises DependencyConflictError when dependency not in registry"
+      - "resolve_dependencies() raises DependencyConflictError when no version satisfies range"
+      - "resolve_dependencies() resolves multiple dependencies correctly"
+      - "DependencyConflictError is an Exception subclass"
+  # -- 5. LOCKFILE MANAGEMENT -----------------------------------
+  - file: "packages/promptvault/src/promptvault/lockfile.py"
+    description: "Lockfile generation and verification for reproducible installs."
+    action: modify
+    acceptance:
+      - "generate_lockfile() returns Lockfile with lockfile_version=1"
+      - "generate_lockfile() produces LockEntry for each resolved dependency with integrity hash"
+      - "generate_lockfile() returns empty resolved dict when no dependencies"
+      - "write_lockfile() writes JSON to disk with indent=2"
+      - "write_lockfile() creates parent directories if needed"
+      - "read_lockfile() returns Lockfile parsed from JSON on disk"
+      - "read_lockfile() raises FileNotFoundError for missing file"
+      - "write_lockfile/read_lockfile roundtrip preserves all data"
+      - "verify_lockfile() returns True when all entries match registry"
+      - "verify_lockfile() returns False when package missing from registry"
+      - "verify_lockfile() returns False when integrity hash differs"
+      - "verify_lockfile() returns True for empty lockfile"
+  # -- 6. CLI ---------------------------------------------------
+  - file: "packages/promptvault/src/promptvault/cli.py"
+    description: "Typer CLI entry point with 7 commands."
+    action: modify
+    acceptance:
+      - "app is a typer.Typer instance with name=promptvault"
+      - "no_args_is_help is True"
+      - "init command creates promptvault.yaml with correct default values"
+      - "init command exits code 1 when manifest already exists"
+      - "publish command exits code 0 and prints published name@version"
+      - "publish --format json outputs valid JSON with name field"
+      - "publish exits code 1 when manifest missing"
+      - "publish exits code 1 when version already exists"
+      - "install command exits code 0 and writes promptvault.lock"
+      - "install prints No dependencies when manifest has no deps"
+      - "install exits code 1 on dependency resolution failure"
+      - "search command shows table with matching packages"
+      - "search command shows No packages when no matches"
+      - "search --format json outputs valid JSON array"
+      - "info command shows package details"
+      - "info command exits code 1 for missing package"
+      - "list command shows table of all packages"
+      - "list command shows No packages for empty registry"
+      - "verify command exits code 0 for valid lockfile"
+      - "verify command exits code 1 for missing lockfile"
+      - "All commands accept --registry option to override path"
+      - "All commands accept --format text|json option"
+  # -- 7. __init__.py -------------------------------------------
+  - file: "packages/promptvault/src/promptvault/__init__.py"
+    description: "Public API surface with convenience imports."
+    action: modify
+    acceptance:
+      - "__version__ is 1.0.0"
+      - "Exports all 6 model classes: CatalogEntry, LockEntry, Lockfile, PackageManifest, PromptEntry, QualityConfig"
+      - "Exports LocalRegistry from registry"
+      - "Exports DependencyConflictError and resolve_dependencies from resolver"
+      - "Exports generate_lockfile, read_lockfile, verify_lockfile, write_lockfile from lockfile"
+      - "__all__ list matches all exports exactly"
+      - "from promptvault import LocalRegistry, PackageManifest, resolve_dependencies works"
+  # -- 8. TEST: MODELS ------------------------------------------
+  - file: "packages/promptvault/tests/test_models.py"
+    description: "Unit tests for all Pydantic data models."
+    action: modify
+    acceptance:
+      - "Minimum 15 test cases (currently 12)"
+      - "Tests PromptEntry with minimal fields and full fields"
+      - "Tests PromptEntry serialization roundtrip"
+      - "Tests QualityConfig defaults and custom values"
+      - "Tests PackageManifest with minimal fields, prompts, and dependencies"
+      - "Tests PackageManifest roundtrip serialization"
+      - "Tests CatalogEntry creation with required fields"
+      - "Tests CatalogEntry.model defaults to None"
+      - "Tests LockEntry creation"
+      - "Tests Lockfile empty and with entries"
+      - "Tests PackageManifest validation rejects missing required fields (name, version, description, author)"
+      - "Tests PromptEntry validation rejects missing required fields (file, name)"
+      - "Tests CatalogEntry validation rejects missing required fields"
+  # -- 9. TEST: REGISTRY ----------------------------------------
+  - file: "packages/promptvault/tests/test_registry.py"
+    description: "Unit tests for LocalRegistry operations."
+    action: modify
+    acceptance:
+      - "Minimum 24 test cases (currently 20)"
+      - "Tests registry creates directories on init"
+      - "Tests publish creates catalog entry with correct fields"
+      - "Tests publish copies files including subdirectories"
+      - "Tests publish updates index.json on disk"
+      - "Tests publish duplicate version raises ValueError"
+      - "Tests publish missing manifest raises FileNotFoundError"
+      - "Tests publish multiple versions updates versions list and latest_version"
+      - "Tests search by name (case-insensitive)"
+      - "Tests search by description"
+      - "Tests search returns empty list for no matches"
+      - "Tests info returns correct CatalogEntry"
+      - "Tests info raises KeyError for missing package"
+      - "Tests list_packages returns all entries"
+      - "Tests list_packages returns empty list for empty registry"
+      - "Tests get_versions returns version list"
+      - "Tests get_versions raises KeyError for missing package"
+      - "Tests get_package_dir returns correct Path"
+      - "Tests get_package_dir raises FileNotFoundError for missing version"
+      - "Tests install() method produces LockEntry list for packages with dependencies"
+      - "Tests install() method raises ValueError when resolved package not on disk"
+      - "Tests _compute_integrity is deterministic (same directory produces same hash)"
+      - "Tests _compute_integrity changes when file contents change"
+  # -- 10. TEST: RESOLVER ---------------------------------------
+  - file: "packages/promptvault/tests/test_resolver.py"
+    description: "Unit tests for dependency resolution."
+    action: modify
+    acceptance:
+      - "Minimum 18 test cases (currently 16)"
+      - "Tests _parse_version_range for exact, caret (major/minor/patch), tilde, PEP 440, gte"
+      - "Tests _find_best_match selects highest matching version"
+      - "Tests _find_best_match returns None when nothing matches"
+      - "Tests _find_best_match with single available version"
+      - "Tests resolve_dependencies with single dependency"
+      - "Tests resolve_dependencies with multiple dependencies"
+      - "Tests resolve_dependencies with empty dependencies"
+      - "Tests resolve_dependencies raises for missing dep"
+      - "Tests resolve_dependencies raises for unsatisfiable range"
+      - "Tests _find_best_match gracefully handles invalid version strings in list"
+      - "Tests _parse_version_range with leading/trailing whitespace"
+  # -- 11. TEST: LOCKFILE ---------------------------------------
+  - file: "packages/promptvault/tests/test_lockfile.py"
+    description: "Unit tests for lockfile generation, I/O, and verification."
+    action: modify
+    acceptance:
+      - "Minimum 12 test cases (currently 10)"
+      - "Tests generate_lockfile with empty resolved dict"
+      - "Tests generate_lockfile with dependencies produces LockEntry with integrity"
+      - "Tests write_lockfile/read_lockfile roundtrip"
+      - "Tests write_lockfile creates parent directories"
+      - "Tests read_lockfile raises FileNotFoundError"
+      - "Tests write_lockfile/read_lockfile with empty lockfile"
+      - "Tests verify_lockfile returns True for valid lockfile"
+      - "Tests verify_lockfile returns False for missing package"
+      - "Tests verify_lockfile returns False for tampered integrity"
+      - "Tests verify_lockfile returns True for empty lockfile"
+      - "Tests generate_lockfile raises FileNotFoundError when package dir does not exist"
+      - "Tests write_lockfile output is valid JSON parseable by json.loads()"
+  # -- 12. TEST: CLI --------------------------------------------
+  - file: "packages/promptvault/tests/test_cli.py"
+    description: "End-to-end CLI tests using typer.testing.CliRunner."
+    action: modify
+    acceptance:
+      - "Minimum 20 test cases (currently 17)"
+      - "Tests init creates manifest with defaults"
+      - "Tests init fails when manifest exists"
+      - "Tests init with default values produces correct YAML"
+      - "Tests publish text and JSON output"
+      - "Tests publish missing manifest exits 1"
+      - "Tests search finds package and shows results"
+      - "Tests search no results message"
+      - "Tests search JSON output"
+      - "Tests info shows details and exits 0"
+      - "Tests info missing package exits 1"
+      - "Tests list empty and populated registry"
+      - "Tests install with no dependencies"
+      - "Tests install with dependencies writes lockfile"
+      - "Tests verify no lockfile exits 1"
+      - "Tests verify valid lockfile exits 0"
+      - "Tests publish duplicate version exits 1 (not currently tested)"
+      - "Tests info --format json outputs valid JSON"
+      - "Tests list --format json outputs valid JSON array"
+  # -- 13. TEST: CONFTEST ---------------------------------------
+  - file: "packages/promptvault/tests/conftest.py"
+    description: "Shared pytest fixtures for promptvault tests."
+    action: modify
+    acceptance:
+      - "Provides sample_manifest fixture (PackageManifest with 2 prompts, no deps)"
+      - "Provides sample_manifest_with_deps fixture (PackageManifest with deps)"
+      - "Provides manifest_dir fixture (tmp_path with promptvault.yaml and prompt files)"
+      - "Provides registry fixture (LocalRegistry in tmp_path)"
+      - "Provides populated_registry fixture (registry with one package published)"
+      - "sample_manifest_with_deps fixture is used by at least one test (not orphaned)"
+  # -- 14. README -----------------------------------------------
+  - file: "packages/promptvault/README.md"
+    description: "Package documentation matching actual features."
+    action: modify
+    acceptance:
+      - "Install command is pip install promptvault-ai"
+      - "Features section lists: package manifests, local registry, dependency resolution, lockfile management, CLI"
+      - "CLI Reference table lists all 7 commands: init, publish, install, search, info, list, verify"
+      - "Version Ranges table documents caret, tilde, PEP 440, and exact syntax"
+      - "Python API section shows correct import paths"
+      - "No placeholder URLs or emails"
+      - "Links to prompttools monorepo (not standalone repo)"
+      - "Mentions test count (minimum 85 tests)"
+      - "Part of the prompttools suite is mentioned"
+constraints:
+  - "Use Pydantic v2 BaseModel for all data classes (not v1 syntax)"
+  - "Use Typer for CLI with Rich console for terminal output"
+  - "Use hatchling as build backend"
+  - "Source layout: src/promptvault/ (not flat layout)"
+  - "All tests use pytest (no unittest)"
+  - "Development Status classifier should be 4 - Beta"
+  - "pyproject.toml must have [project.urls] with monorepo links"
+  - "Do not regress test count below 75"
+  - "Minimum total test count after sprint: 85"
+notes: |
+  The promptvault package is ALREADY IMPLEMENTED. All source files, CLI,
+  and 75 tests exist. This sprint is about:
+
+  1. VERIFICATION: Run pytest and confirm all 75 tests pass. Fix any failures.
+  2. GAP ANALYSIS: Identified gaps to fill:
+     - pyproject.toml missing [project.urls] section (Homepage, Repository)
+     - No tests for registry.install() method
+     - No tests for _compute_integrity determinism/change detection
+     - No validation rejection tests for models (missing required fields)
+     - No tests for publish duplicate version via CLI (only tested in registry)
+     - No tests for info/list --format json via CLI
+     - _find_best_match not tested with invalid version strings
+     - _parse_version_range not tested with whitespace
+     - generate_lockfile not tested for missing package dir
+     - conftest sample_manifest_with_deps fixture appears unused
+     - README does not mention test count
+  3. HARDENING:
+     - Add [project.urls] to pyproject.toml pointing to monorepo
+     - Verify Development Status is Beta (CONFIRMED: already correct)
+     - Verify all __init__.py exports match actual implementations
+     - Fill the identified test gaps (target: 85+ tests)
+  4. E2E TESTING: Invoke promptvault CLI commands and verify:
+     - init creates valid YAML
+     - publish/install/search/info/list/verify all work end-to-end
+     - JSON output is valid and parseable
+     - Error cases produce clean output and correct exit codes
+  5. DOCUMENTATION: Update README with test count and verify all
+     feature claims match the actual implementation.
+
+  The Builder should NOT rewrite files that are already correct.
+  Only modify files where acceptance criteria are not met.

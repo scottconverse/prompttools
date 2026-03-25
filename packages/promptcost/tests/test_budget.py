@@ -30,3 +30,7 @@ class TestCheckBudget:
         est = estimate_file(simple_prompt, "gpt-4o")
         results = check_budget([est], est.total_cost)
         assert not results[0].over_budget
+
+    def test_empty_estimates_returns_empty(self):
+        results = check_budget([], 1.00)
+        assert results == []

@@ -1,0 +1,326 @@
+sprint: 3
+evaluator_verdict: PASS
+loop_iteration: 1
+max_loops: 3
+timestamp: "2026-03-25 14:30"
+
+test_results:
+  total: 104
+  passed: 104
+  failed: 0
+  warnings: 0
+  warning_details: "None"
+
+acceptance_criteria:
+  # -- 1. PYPROJECT.TOML --
+  - criterion: "name is promptfmt-ai"
+    status: PASS
+    evidence: "pyproject.toml line 6: name = 'promptfmt-ai'"
+
+  - criterion: "version is 1.0.0"
+    status: PASS
+    evidence: "pyproject.toml line 7: version = '1.0.0'"
+
+  - criterion: "requires-python is >=3.9"
+    status: PASS
+    evidence: "pyproject.toml line 11: requires-python = '>=3.9'"
+
+  - criterion: "Development Status classifier is 4 - Beta"
+    status: PASS
+    evidence: "pyproject.toml line 14: 'Development Status :: 4 - Beta'"
+
+  - criterion: "dependencies include prompttools-core-ai>=1.0,<2.0"
+    status: PASS
+    evidence: "pyproject.toml line 21: 'prompttools-core-ai>=1.0,<2.0'"
+
+  - criterion: "dependencies include typer[all]>=0.12"
+    status: PASS
+    evidence: "pyproject.toml line 22: 'typer[all]>=0.12'"
+
+  - criterion: "dependencies include rich>=13.0"
+    status: PASS
+    evidence: "pyproject.toml line 23: 'rich>=13.0'"
+
+  - criterion: "[project.scripts] maps promptfmt to promptfmt.cli:app"
+    status: PASS
+    evidence: "pyproject.toml line 31: promptfmt = 'promptfmt.cli:app'"
+
+  - criterion: "[tool.hatch.build.targets.wheel] packages points to [promptfmt]"
+    status: PASS
+    evidence: "pyproject.toml line 40: packages = ['promptfmt']"
+
+  - criterion: "[project.urls] section exists with Homepage and Repository pointing to monorepo GitHub URL"
+    status: PASS
+    evidence: "pyproject.toml lines 26-28: Homepage and Repository both point to https://github.com/scottconverse/prompttools"
+
+  - criterion: "watchfiles dependency is removed if no watch command exists in CLI"
+    status: PASS
+    evidence: "watchfiles absent from pyproject.toml dependencies. CLI has only format and init commands."
+
+  # -- 2. __init__.py --
+  - criterion: "__version__ is 1.0.0"
+    status: PASS
+    evidence: "__init__.py line 6: __version__ = '1.0.0'"
+
+  - criterion: "Exports FmtConfig, FormattedResult, format_content, format_file from formatter"
+    status: PASS
+    evidence: "__init__.py line 3: from promptfmt.formatter import FmtConfig, FormattedResult, format_content, format_file"
+
+  - criterion: "Exports is_equivalent from equivalence"
+    status: PASS
+    evidence: "__init__.py line 4: from promptfmt.equivalence import is_equivalent"
+
+  - criterion: "__all__ list contains exactly these 5 names"
+    status: PASS
+    evidence: "__init__.py lines 8-14: __all__ contains FmtConfig, FormattedResult, format_content, format_file, is_equivalent"
+
+  - criterion: "from promptfmt import format_file, FmtConfig, is_equivalent works without error"
+    status: PASS
+    evidence: "All 104 tests pass; test files successfully import these names."
+
+  # -- 3. FORMATTER --
+  - criterion: "FmtConfig raises ValueError for invalid delimiter_style"
+    status: PASS
+    evidence: "formatter.py lines 31-36: __post_init__ validates against _VALID_DELIMITER_STYLES set."
+
+  - criterion: "FmtConfig raises ValueError for invalid variable_style"
+    status: PASS
+    evidence: "formatter.py lines 37-41: __post_init__ validates against _VALID_VARIABLE_STYLES set."
+
+  - criterion: "FmtConfig defaults: delimiter_style=###, variable_style=double_brace, max_line_length=120, indent=2, sort_metadata_keys=True"
+    status: PASS
+    evidence: "formatter.py lines 24-29: defaults match exactly."
+
+  - criterion: "format_content() applies rules in order: whitespace, delimiters, variables, wrapping, structure"
+    status: PASS
+    evidence: "formatter.py lines 70-93: Pipeline applies rules in correct order."
+
+  - criterion: "format_content() skips wrapping when max_line_length is 0"
+    status: PASS
+    evidence: "formatter.py line 80: if config.max_line_length > 0. Tested in test_formatter.py::test_line_wrapping_disabled."
+
+  - criterion: "format_content() applies structure normalization only for YAML and JSON formats"
+    status: PASS
+    evidence: "formatter.py line 84: if fmt in (PromptFormat.YAML, PromptFormat.JSON)."
+
+  - criterion: "format_content() re-applies whitespace after structure normalization"
+    status: PASS
+    evidence: "formatter.py line 92: result = whitespace.apply(result) inside YAML/JSON branch."
+
+  - criterion: "format_file() returns FormattedResult with path, original_content, formatted_content, changed, equivalent, error"
+    status: PASS
+    evidence: "formatter.py lines 44-53: FormattedResult dataclass has all six fields."
+
+  - criterion: "format_file() sets changed=True when formatted content differs from original"
+    status: PASS
+    evidence: "formatter.py line 130. Tested in test_formatter.py::test_formats_txt_file."
+
+  - criterion: "format_file() sets equivalent=True when semantic content is preserved"
+    status: PASS
+    evidence: "formatter.py lines 133-145. Tested in test_formatter.py."
+
+  - criterion: "format_file() sets error string when equivalence check fails"
+    status: PASS
+    evidence: "formatter.py lines 146-150: error set on failure."
+
+  - criterion: "format_file() uses FmtConfig defaults when config is None"
+    status: PASS
+    evidence: "formatter.py lines 116-117: if config is None: config = FmtConfig()."
+
+  # -- 4. EQUIVALENCE --
+  - criterion: "is_equivalent() returns True for identical PromptFiles"
+    status: PASS
+    evidence: "test_equivalence.py::test_identical_prompt_files passes."
+
+  - criterion: "is_equivalent() returns False when message counts differ"
+    status: PASS
+    evidence: "test_equivalence.py::test_different_message_counts passes."
+
+  - criterion: "is_equivalent() returns False when message roles differ"
+    status: PASS
+    evidence: "test_equivalence.py::test_different_message_roles passes."
+
+  - criterion: "is_equivalent() returns True when message content differs only in whitespace"
+    status: PASS
+    evidence: "test_equivalence.py::test_whitespace_only_content_difference passes."
+
+  - criterion: "is_equivalent() returns False when message content differs semantically"
+    status: PASS
+    evidence: "test_equivalence.py::test_semantic_content_difference passes."
+
+  - criterion: "is_equivalent() returns False when variable names differ"
+    status: PASS
+    evidence: "test_equivalence.py::test_different_variable_names passes."
+
+  - criterion: "is_equivalent() returns True when variable names match but syntax differs"
+    status: PASS
+    evidence: "test_equivalence.py::test_same_variables_different_syntax passes."
+
+  - criterion: "is_equivalent() returns False when metadata values differ"
+    status: PASS
+    evidence: "test_equivalence.py::test_different_metadata_values passes."
+
+  - criterion: "is_equivalent() returns True for empty messages, variables, and metadata"
+    status: PASS
+    evidence: "test_equivalence.py::test_empty_messages_variables_metadata passes."
+
+  # -- 5. CLI --
+  - criterion: "app is a typer.Typer instance with name=promptfmt and no_args_is_help=True"
+    status: PASS
+    evidence: "cli.py lines 18-21."
+
+  - criterion: "format command accepts a path argument (file or directory)"
+    status: PASS
+    evidence: "cli.py line 49. Tested with both files and directories."
+
+  - criterion: "--check flag exits with code 1 when files need formatting"
+    status: PASS
+    evidence: "cli.py lines 128-129. Tested in test_cli.py."
+
+  - criterion: "--check flag does NOT modify any files"
+    status: PASS
+    evidence: "cli.py line 103. Tested in test_cli.py::test_check_does_not_modify_file."
+
+  - criterion: "--diff flag shows unified diff output"
+    status: PASS
+    evidence: "cli.py lines 90-101. Tested in test_cli.py."
+
+  - criterion: "--delimiter-style accepts ###, ---, ===, ***, ~~~"
+    status: PASS
+    evidence: "cli.py line 52, FmtConfig validates styles."
+
+  - criterion: "--variable-style accepts double_brace, single_brace, angle_bracket"
+    status: PASS
+    evidence: "cli.py line 53, FmtConfig validates styles."
+
+  - criterion: "--max-line-length accepts an integer (0 to disable)"
+    status: PASS
+    evidence: "cli.py line 54."
+
+  - criterion: "--quiet / -q suppresses non-error output"
+    status: PASS
+    evidence: "cli.py line 55. Tested in test_cli.py::TestFormatQuiet."
+
+  - criterion: "format exits with code 0 on success"
+    status: PASS
+    evidence: "Typer default exit code 0. Verified throughout test_cli.py."
+
+  - criterion: "format exits with code 2 when errors occur"
+    status: PASS
+    evidence: "cli.py lines 130-131: raise typer.Exit(2)."
+
+  - criterion: "format on empty directory exits 0 with No prompt files found message"
+    status: PASS
+    evidence: "cli.py lines 66-68. Tested in test_cli.py::test_format_empty_directory."
+
+  - criterion: "init creates .promptfmt.yaml with correct default content"
+    status: PASS
+    evidence: "cli.py lines 137-153. Tested in test_cli.py::test_init_creates_config."
+
+  - criterion: "init exits 1 when .promptfmt.yaml already exists"
+    status: PASS
+    evidence: "cli.py lines 149-151. Tested in test_cli.py::test_init_refuses_overwrite."
+
+  - criterion: "_collect_files() returns empty list for non-existent path (no crash)"
+    status: PASS
+    evidence: "cli.py lines 34-44: falls through to return []. Tested in test_cli.py::test_nonexistent_path."
+
+  # -- 6-10. RULES (whitespace, delimiters, variables, wrapping, structure) --
+  # All rule acceptance criteria verified via source code inspection and passing tests.
+  # See full criterion list in sprint contract. Every criterion has a corresponding
+  # passing test or verified code path.
+
+  - criterion: "Whitespace: all 8 acceptance criteria"
+    status: PASS
+    evidence: "9 tests in test_whitespace.py all pass. Each criterion has a dedicated test."
+
+  - criterion: "Delimiters: all 8 acceptance criteria"
+    status: PASS
+    evidence: "13 tests in test_delimiters.py all pass. Each criterion covered."
+
+  - criterion: "Variables: all 9 acceptance criteria"
+    status: PASS
+    evidence: "9 tests in test_variables.py all pass. Each criterion covered."
+
+  - criterion: "Wrapping: all 9 acceptance criteria"
+    status: PASS
+    evidence: "12 tests in test_wrapping.py all pass. Each criterion covered."
+
+  - criterion: "Structure: all 13 acceptance criteria"
+    status: PASS
+    evidence: "16 tests in test_structure.py all pass. Each criterion covered."
+
+  # -- 11-14. NEW TEST FILES --
+  - criterion: "test_delimiters.py: minimum 10 test cases"
+    status: PASS
+    evidence: "13 test methods."
+
+  - criterion: "test_wrapping.py: minimum 10 test cases"
+    status: PASS
+    evidence: "12 test methods."
+
+  - criterion: "test_structure.py: minimum 12 test cases"
+    status: PASS
+    evidence: "16 test methods."
+
+  - criterion: "test_equivalence.py: minimum 10 test cases"
+    status: PASS
+    evidence: "15 test methods."
+
+  # -- 15. README --
+  - criterion: "README: all 10 acceptance criteria"
+    status: PASS
+    evidence: "Installation shows pip install promptfmt-ai. Dependencies match pyproject.toml. CLI commands and options match cli.py. Import paths work. Exit codes match. Rules section accurate. Config table matches FmtConfig defaults. No test count claim to contradict. No fabricated URLs."
+
+  # -- CONSTRAINTS --
+  - criterion: "Minimum 80 test cases total across all test files"
+    status: PASS
+    evidence: "104 total tests."
+
+additional_findings:
+  - severity: MEDIUM
+    file: "packages/promptfmt/tests/test_formatter.py"
+    location: "Missing tests for FmtConfig validation"
+    finding: "No test exercises FmtConfig.__post_init__ raising ValueError for invalid delimiter_style or variable_style. The validation code exists but is never tested."
+    suggestion: "Add two tests: FmtConfig(delimiter_style='invalid') raises ValueError, FmtConfig(variable_style='invalid') raises ValueError."
+
+  - severity: LOW
+    file: "packages/promptfmt/promptfmt/rules/delimiters.py"
+    location: "lines 8-14"
+    finding: "_DELIMITER_PATTERNS list is defined but never used. The apply() function uses inline re.match() calls instead."
+    suggestion: "Remove unused _DELIMITER_PATTERNS or refactor apply() to use them."
+
+  - severity: LOW
+    file: "packages/promptfmt/promptfmt/rules/wrapping.py"
+    location: "lines 9-11"
+    finding: "_VAR_RE and _INLINE_CODE_RE are defined but never used in any function."
+    suggestion: "Remove unused regex patterns."
+
+  - severity: LOW
+    file: "packages/promptfmt/promptfmt/cli.py"
+    location: "line 25"
+    finding: "_FORMAT_MAP dictionary is defined but never referenced by _collect_files() or any other function."
+    suggestion: "Remove _FORMAT_MAP if unused, or integrate it into _collect_files()."
+
+  - severity: LOW
+    file: "packages/promptfmt/tests/test_cli.py"
+    location: "TestFormatCheck::test_check_returns_1_when_changes_needed"
+    finding: "Assertion 'assert result.exit_code in (0, 1)' is too lenient. VALID_YAML has double-spaces, so formatting always produces changes -- exit code should be 1."
+    suggestion: "Assert result.exit_code == 1 specifically."
+
+blind_spots:
+  - "FmtConfig.__post_init__ validation is untested -- invalid delimiter or variable styles are not covered."
+  - "No test verifies format_file() returns error and equivalent=False when formatting breaks semantic equivalence."
+  - "No test for format_file() when re-parse of formatted content raises an exception (except branch at formatter.py line 148-150)."
+  - "No test for CLI behavior when format_file() raises an unexpected exception mid-file (try/except at cli.py lines 74-79)."
+  - "No test for unclosed code blocks in delimiters or variables modules."
+  - "No test for single_brace target when fstring-style vars exist (variables.py line 67 skip logic)."
+  - "No test for wrapping when a single word exceeds max_length."
+
+summary: |
+  All 104 tests pass with zero failures and zero warnings. Every acceptance criterion in the sprint
+  contract is met with verifiable evidence. The four new test files exceed their minimum test count
+  requirements (13, 12, 16, 15 vs minimums of 10, 10, 12, 10). The watchfiles dependency was removed.
+  pyproject.toml has the required [project.urls]. The README is accurate and consistent with the code.
+  No secrets or credentials found. One MEDIUM finding (FmtConfig validation untested) and four LOW
+  findings (unused code, lenient assertion) are noted but do not block the verdict.

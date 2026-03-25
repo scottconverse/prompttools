@@ -1,0 +1,239 @@
+sprint: 2
+evaluator_verdict: PASS
+loop_iteration: 1
+max_loops: 3
+timestamp: "2026-03-25 12:00"
+
+test_results:
+  total: 211
+  passed: 211
+  failed: 0
+  warnings: 0
+  warning_details: "None"
+
+acceptance_criteria:
+  - criterion: "name is prompttools-core-ai"
+    status: PASS
+    evidence: "pyproject.toml line 6"
+  - criterion: "version is 1.0.0"
+    status: PASS
+    evidence: "pyproject.toml line 7"
+  - criterion: "requires-python is >=3.9"
+    status: PASS
+    evidence: "pyproject.toml line 11"
+  - criterion: "Development Status classifier is 4 - Beta"
+    status: PASS
+    evidence: "pyproject.toml line 14"
+  - criterion: "[project.urls] section exists with Homepage and Repository keys"
+    status: PASS
+    evidence: "pyproject.toml lines 38-40: both keys present"
+  - criterion: "Homepage URL points to the prompttools monorepo GitHub page"
+    status: PASS
+    evidence: "Homepage = https://github.com/scottconverse/prompttools"
+  - criterion: "Repository URL points to the prompttools monorepo GitHub page"
+    status: PASS
+    evidence: "Repository = https://github.com/scottconverse/prompttools"
+  - criterion: "dependencies include pydantic>=2.0, pyyaml>=6.0, tiktoken>=0.7"
+    status: PASS
+    evidence: "pyproject.toml lines 24-28"
+  - criterion: "dev extras include pytest>=8.0, pytest-cov, ruff, mypy"
+    status: PASS
+    evidence: "pyproject.toml lines 31-36"
+  - criterion: "[tool.hatch.build.targets.wheel] packages points to prompttools_core"
+    status: PASS
+    evidence: "pyproject.toml line 43"
+  - criterion: "license is MIT"
+    status: PASS
+    evidence: "pyproject.toml line 10"
+  - criterion: "__version__ is 1.0.0"
+    status: PASS
+    evidence: "__init__.py line 43"
+  - criterion: "Exports all 7 error classes"
+    status: PASS
+    evidence: "__init__.py lines 8-16; verified via python import"
+  - criterion: "Exports all 7 model classes"
+    status: PASS
+    evidence: "__init__.py lines 17-25"
+  - criterion: "Exports all 4 parser functions"
+    status: PASS
+    evidence: "__init__.py lines 26-31"
+  - criterion: "Exports 3 tokenizer symbols"
+    status: PASS
+    evidence: "__init__.py line 32"
+  - criterion: "Exports 4 profile symbols"
+    status: PASS
+    evidence: "__init__.py lines 33-38"
+  - criterion: "Exports PromptCache from cache"
+    status: PASS
+    evidence: "__init__.py line 39"
+  - criterion: "Exports find_config_file and load_config from config"
+    status: PASS
+    evidence: "__init__.py line 40"
+  - criterion: "Exports discover_plugins and load_plugin from plugins"
+    status: PASS
+    evidence: "__init__.py line 41"
+  - criterion: "__all__ list contains exactly 27 entries matching all exports above"
+    status: PASS
+    evidence: "__all__ has 30 entries. Contract lists 30 distinct symbols (7+7+4+3+4+1+2+2=30). The 27 is a miscalculation in the sprint doc. All symbols present."
+  - criterion: "from prompttools_core import PromptFile, parse_file, Tokenizer works"
+    status: PASS
+    evidence: "Verified via python -c import; no errors"
+  - criterion: "PromptFormat enum has exactly 4 values"
+    status: PASS
+    evidence: "models.py lines 17-23; test_models.py verifies"
+  - criterion: "Message.role is Literal[system, user, assistant, tool]"
+    status: PASS
+    evidence: "models.py line 31"
+  - criterion: "Message has all 6 fields with correct defaults"
+    status: PASS
+    evidence: "models.py lines 31-50"
+  - criterion: "PromptFile has all 9 required fields"
+    status: PASS
+    evidence: "models.py lines 53-83"
+  - criterion: "PromptFile.content_hash auto-computed and not overwritten when provided"
+    status: PASS
+    evidence: "models.py lines 85-90; test_models.py verifies both behaviors"
+  - criterion: "PromptFile helper methods (system_message, user_messages, has_role)"
+    status: PASS
+    evidence: "models.py lines 92-105; all tested"
+  - criterion: "PipelineStage and PromptPipeline have all fields"
+    status: PASS
+    evidence: "models.py lines 108-155"
+  - criterion: "ModelProfile is frozen with tokenizer_encoding property"
+    status: PASS
+    evidence: "models.py lines 160, 192-195; tested"
+  - criterion: "ToolConfig has all 7 fields"
+    status: PASS
+    evidence: "models.py lines 198-223"
+  - criterion: "All models use Pydantic v2 BaseModel"
+    status: PASS
+    evidence: "models.py line 14: from pydantic import BaseModel"
+  - criterion: "parse_file() auto-detects format from extension"
+    status: PASS
+    evidence: "parser.py lines 32-38; tested"
+  - criterion: "parse_file() raises ParseError for unsupported extensions"
+    status: PASS
+    evidence: "parser.py lines 52-57; tested"
+  - criterion: "parse_file() raises FileNotFoundError when file does not exist"
+    status: PASS
+    evidence: "parser.py lines 83-84; tested"
+  - criterion: "parse_file() returns PromptFile with messages and content_hash"
+    status: PASS
+    evidence: "Verified across all format tests"
+  - criterion: "parse_stdin() accepts text, md, yaml, json and raises for unsupported"
+    status: PASS
+    evidence: "parser.py lines 107-118; all tested"
+  - criterion: "parse_stdin() path name is -"
+    status: PASS
+    evidence: "parser.py line 120; tested"
+  - criterion: "parse_directory() all criteria (recursive, raises, skips, exclude)"
+    status: PASS
+    evidence: "parser.py lines 125-168; all four behaviors tested"
+  - criterion: "parse_pipeline() all criteria (parses, errors, resolves, populates)"
+    status: PASS
+    evidence: "parser.py lines 171-248; 7 pipeline tests passing"
+  - criterion: "All extract_variables criteria"
+    status: PASS
+    evidence: "_variables.py; tested in test_formats.py and test_parser.py"
+  - criterion: "EXCLUDED_XML_TAGS contains at least 30 tags"
+    status: PASS
+    evidence: "44 tags present; test confirms >= 30"
+  - criterion: "All parse_yaml criteria (10 items)"
+    status: PASS
+    evidence: "yaml_parser.py; all verified with tests"
+  - criterion: "All parse_json criteria (7 items)"
+    status: PASS
+    evidence: "json_parser.py; all verified with tests"
+  - criterion: "All parse_markdown criteria (6 items)"
+    status: PASS
+    evidence: "markdown.py; all verified with tests"
+  - criterion: "All parse_text criteria (3 items)"
+    status: PASS
+    evidence: "text.py; all verified with tests"
+  - criterion: "All tokenizer criteria (15 items)"
+    status: PASS
+    evidence: "tokenizer.py; 22 tests verify all criteria"
+  - criterion: "All profile criteria (12 items)"
+    status: PASS
+    evidence: "profiles.py; verified via python and tests"
+  - criterion: "All config criteria (9 items)"
+    status: PASS
+    evidence: "config.py; 17 tests verify all criteria"
+  - criterion: "All cache criteria (11 items)"
+    status: PASS
+    evidence: "cache.py; 19 tests verify all criteria"
+  - criterion: "All plugin criteria (8 items)"
+    status: PASS
+    evidence: "plugins.py; tests verify all criteria"
+  - criterion: "All error hierarchy criteria (7 items)"
+    status: PASS
+    evidence: "errors.py; 35 tests verify all criteria"
+  - criterion: "test_parser.py minimum 38 tests"
+    status: PASS
+    evidence: "47 test cases collected"
+  - criterion: "test_config.py minimum 16 tests"
+    status: PASS
+    evidence: "17 test cases collected"
+  - criterion: "test_cache.py minimum 17 tests"
+    status: PASS
+    evidence: "19 test cases collected"
+  - criterion: "test_tokenizer.py minimum 19 tests"
+    status: PASS
+    evidence: "22 test cases collected"
+  - criterion: "test_errors.py minimum 10 tests"
+    status: PASS
+    evidence: "35 test cases collected"
+  - criterion: "test_formats.py minimum 15 tests"
+    status: PASS
+    evidence: "30 test cases collected"
+  - criterion: "Pipeline manifest fixture complete"
+    status: PASS
+    evidence: "manifest.yaml: name=research-and-edit, 2 stages, depends_on, valid YAML"
+  - criterion: "All README criteria (16 items)"
+    status: PASS
+    evidence: "All API refs, profiles table, formats, errors, models, suite tools, URLs verified"
+  - criterion: "Minimum 120 total tests"
+    status: PASS
+    evidence: "211 total tests"
+  - criterion: "Zero regressions"
+    status: PASS
+    evidence: "211 passed, 0 failed, 0 warnings"
+
+additional_findings:
+  - severity: LOW
+    file: "packages/prompttools-core/prompttools_core/__init__.py"
+    location: "__all__ list"
+    finding: "__all__ has 30 entries, not 27 as stated in sprint contract. The contract lists 30 distinct symbols. The 27 is a calculation error in the sprint document. The code is correct."
+    suggestion: "No code change needed. Update sprint contract to say 30."
+  - severity: LOW
+    file: "packages/prompttools-core/tests/fixtures/pii.yaml"
+    location: "line 5"
+    finding: "Contains fake API key pattern (sk-proj-abc123...) that triggers security grep. Intentional test data, not a real secret."
+    suggestion: "No change needed. Consider adding a comment marking it as intentional."
+  - severity: LOW
+    file: "packages/prompttools-core/prompttools_core/cache.py"
+    location: "TTL implementation (lines 81-86, 108-109)"
+    finding: "TTL stored in memory only, not persisted to disk. TTL expiration does not survive process restarts."
+    suggestion: "Consider persisting TTL in cache.json. Design limitation, not a bug."
+  - severity: LOW
+    file: "packages/prompttools-core/prompttools_core/plugins.py"
+    location: "load_plugin() line 73"
+    finding: "PluginError raise path is tested indirectly through discover_plugins, not directly."
+    suggestion: "Add a direct test for load_plugin raising PluginError with a broken .py file."
+
+blind_spots:
+  - "No test for parse_pipeline() when a referenced stage file does not exist"
+  - "No test for parse_directory with only unparseable files"
+  - "No test for Tokenizer when tiktoken is not installed"
+  - "No test for parse_yaml() with message entry missing both role and content"
+  - "No test for PromptFile with empty raw_content"
+  - "No test for cache TTL surviving across process restarts"
+  - "No direct test for load_plugin raising PluginError on import failure"
+
+summary: |
+  All 211 tests pass with zero failures and zero warnings. Every acceptance criterion
+  in the sprint contract is met with verified evidence. The code is clean, well-structured,
+  and follows Pydantic v2 conventions throughout. Test coverage exceeds all minimum
+  thresholds (211 total vs 120 required). The only discrepancy is the contract saying
+  __all__ should have 27 entries when the actual required count is 30 -- the code has
+  the correct 30. No security issues found. No CRITICAL or HIGH findings. The work is ready.

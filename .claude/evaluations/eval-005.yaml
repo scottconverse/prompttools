@@ -1,0 +1,590 @@
+sprint: 5
+evaluator_verdict: PASS
+loop_iteration: 1
+max_loops: 3
+timestamp: "2026-03-25 14:30"
+
+test_results:
+  total: 146
+  passed: 146
+  failed: 0
+  warnings: 0
+  warning_details: "None"
+
+acceptance_criteria:
+  # -- 1. PYPROJECT.TOML --
+  - criterion: "name is 'prompttest-ai'"
+    status: PASS
+    evidence: "pyproject.toml line 6: name = 'prompttest-ai'"
+  - criterion: "version is '1.0.0'"
+    status: PASS
+    evidence: "pyproject.toml line 7: version = '1.0.0'"
+  - criterion: "requires-python is '>=3.9'"
+    status: PASS
+    evidence: "pyproject.toml line 11: requires-python = '>=3.9'"
+  - criterion: "dependencies include prompttools-core-ai>=1.0,<2.0"
+    status: PASS
+    evidence: "pyproject.toml line 22"
+  - criterion: "dependencies include promptcost-ai>=1.0,<2.0"
+    status: PASS
+    evidence: "pyproject.toml line 23"
+  - criterion: "dependencies include typer[all]>=0.12"
+    status: PASS
+    evidence: "pyproject.toml line 25"
+  - criterion: "dependencies include pyyaml>=6.0"
+    status: PASS
+    evidence: "pyproject.toml line 26"
+  - criterion: "dependencies include rich>=13.0"
+    status: PASS
+    evidence: "pyproject.toml line 27"
+  - criterion: "dependencies include pydantic>=2.0"
+    status: PASS
+    evidence: "pyproject.toml line 24"
+  - criterion: "[project.scripts] maps 'prompttest' to 'prompttest.cli:app'"
+    status: PASS
+    evidence: "pyproject.toml lines 30-31"
+  - criterion: "[tool.hatch.build.targets.wheel] packages points to 'src/prompttest'"
+    status: PASS
+    evidence: "pyproject.toml lines 43-44"
+  - criterion: "dev extras include pytest>=8.0 and pytest-cov"
+    status: PASS
+    evidence: "pyproject.toml lines 34-37"
+  - criterion: "Development Status classifier is '4 - Beta'"
+    status: PASS
+    evidence: "pyproject.toml line 14"
+  - criterion: "[project.urls] section exists with Homepage and Repository pointing to prompttools monorepo GitHub URL"
+    status: PASS
+    evidence: "pyproject.toml lines 39-41: Homepage and Repository both point to https://github.com/scottconverse/prompttools"
+
+  # -- 2. DATA MODELS --
+  - criterion: "AssertionType enum has exactly 15 values"
+    status: PASS
+    evidence: "Verified via script: len(AssertionType) == 15. All 15 values present in models.py lines 16-33."
+  - criterion: "AssertionType is a str Enum"
+    status: PASS
+    evidence: "models.py line 16: class AssertionType(str, Enum)"
+  - criterion: "PromptTestStatus enum has exactly 4 values"
+    status: PASS
+    evidence: "models.py lines 36-43: PASSED, FAILED, ERROR, SKIPPED"
+  - criterion: "PromptTestCase has 'assert' alias that maps to assert_type field"
+    status: PASS
+    evidence: "models.py line 55: assert_type = Field(alias='assert')"
+  - criterion: "PromptTestCase.model_config has populate_by_name=True"
+    status: PASS
+    evidence: "models.py line 52"
+  - criterion: "PromptTestCase._validate_bounds rejects negative max, min, and ratio_max values"
+    status: PASS
+    evidence: "models.py lines 72-81; tested in test_models.py TestValidateBounds class"
+  - criterion: "PromptTestCase defaults: case_sensitive=False, skip=False, skip_reason=None, text=None, role=None, variables=None"
+    status: PASS
+    evidence: "models.py lines 58-70; verified by test_models.py::TestTestCase::test_defaults"
+  - criterion: "AssertionResult has fields: test_name, status, assert_type, message, expected, actual, duration_ms"
+    status: PASS
+    evidence: "models.py lines 84-93"
+  - criterion: "AssertionResult.duration_ms defaults to 0.0"
+    status: PASS
+    evidence: "models.py line 93: duration_ms: float = 0.0"
+  - criterion: "PromptTestSuite has fields: name, prompt_path, model, tests"
+    status: PASS
+    evidence: "models.py lines 96-105"
+  - criterion: "PromptTestSuite.model defaults to None"
+    status: PASS
+    evidence: "models.py line 104: model: Optional[str] = None"
+  - criterion: "PromptTestReport has fields: suites, total, passed, failed, errors, skipped, duration_ms"
+    status: PASS
+    evidence: "models.py lines 108-117"
+  - criterion: "PromptTestReport() with no args produces total=0, passed=0, failed=0, suites=[]"
+    status: PASS
+    evidence: "Verified by test_models.py::TestTestReport::test_empty_report"
+  - criterion: "All models use Pydantic v2 BaseModel (not v1)"
+    status: PASS
+    evidence: "models.py line 13: from pydantic import BaseModel, Field, model_validator"
+
+  # -- 3. ASSERTION ENGINE --
+  - criterion: "run_assertion() returns SKIPPED status when test_case.skip is True"
+    status: PASS
+    evidence: "assertions.py lines 55-61; tested in test_assertions.py::TestSkippedTests"
+  - criterion: "run_assertion() returns ERROR status for unknown assertion type"
+    status: PASS
+    evidence: "assertions.py lines 63-70"
+  - criterion: "run_assertion() catches exceptions and returns ERROR status"
+    status: PASS
+    evidence: "assertions.py lines 77-83"
+  - criterion: "run_assertion() records duration_ms on every result"
+    status: PASS
+    evidence: "assertions.py lines 74,84-85; tested in test_assertions.py::TestDuration"
+  - criterion: "run_assertion() passes suite_model as fallback when test_case.model is None"
+    status: PASS
+    evidence: "assertions.py line 72: model = test_case.model or suite_model"
+  - criterion: "_ASSERTIONS registry has exactly 14 entries (all AssertionType values are registered)"
+    status: PASS
+    evidence: "Verified via script: len(_ASSERTIONS)==15, all 15 types registered. Contract says 14 but parenthetical says all values registered which is true."
+  - criterion: "contains: passes when text is found (case-insensitive by default)"
+    status: PASS
+    evidence: "test_assertions.py::TestContains::test_contains_pass and test_contains_case_insensitive"
+  - criterion: "contains: fails when text is not found"
+    status: PASS
+    evidence: "test_assertions.py::TestContains::test_contains_fail"
+  - criterion: "contains: respects case_sensitive=True"
+    status: PASS
+    evidence: "test_assertions.py::TestContains::test_contains_case_sensitive_fail"
+  - criterion: "contains: returns ERROR when text parameter is missing"
+    status: PASS
+    evidence: "test_assertions.py::TestContains::test_contains_missing_text"
+  - criterion: "not_contains: passes when text is NOT found"
+    status: PASS
+    evidence: "test_assertions.py::TestNotContains::test_not_contains_pass"
+  - criterion: "not_contains: fails when text IS found"
+    status: PASS
+    evidence: "test_assertions.py::TestNotContains::test_not_contains_fail"
+  - criterion: "not_contains: returns ERROR when text parameter is missing"
+    status: PASS
+    evidence: "test_assertions.py::TestNotContains::test_not_contains_missing_text"
+  - criterion: "has_role: passes when prompt has a message with the specified role"
+    status: PASS
+    evidence: "test_assertions.py::TestHasRole::test_has_role_system_pass, test_has_role_user_pass"
+  - criterion: "has_role: fails when role is not present"
+    status: PASS
+    evidence: "test_assertions.py::TestHasRole::test_has_role_assistant_fail"
+  - criterion: "has_role: returns ERROR when role parameter is missing"
+    status: PASS
+    evidence: "test_assertions.py::TestHasRole::test_has_role_missing_param"
+  - criterion: "has_variables: passes when all required variables exist"
+    status: PASS
+    evidence: "test_assertions.py::TestHasVariables::test_has_variables_pass"
+  - criterion: "has_variables: fails with missing variable names in message"
+    status: PASS
+    evidence: "test_assertions.py::TestHasVariables::test_has_variables_fail"
+  - criterion: "has_variables: returns ERROR when variables parameter is missing"
+    status: PASS
+    evidence: "test_assertions.py::TestHasVariables::test_has_variables_missing_param"
+  - criterion: "max_tokens: passes when token count <= max"
+    status: PASS
+    evidence: "test_assertions.py::TestMaxTokens::test_max_tokens_pass"
+  - criterion: "max_tokens: fails when token count > max"
+    status: PASS
+    evidence: "test_assertions.py::TestMaxTokens::test_max_tokens_fail"
+  - criterion: "max_tokens: returns ERROR when max parameter is missing"
+    status: PASS
+    evidence: "test_assertions.py::TestMaxTokens::test_max_tokens_missing_param"
+  - criterion: "min_tokens: passes when token count >= min"
+    status: PASS
+    evidence: "test_assertions.py::TestMinTokens::test_min_tokens_pass"
+  - criterion: "min_tokens: fails when token count < min"
+    status: PASS
+    evidence: "test_assertions.py::TestMinTokens::test_min_tokens_fail"
+  - criterion: "min_tokens: returns ERROR when min parameter is missing"
+    status: PASS
+    evidence: "test_assertions.py::TestMinTokens::test_min_tokens_missing_param"
+  - criterion: "max_messages: passes when message count <= max"
+    status: PASS
+    evidence: "test_assertions.py::TestMaxMessages::test_max_messages_pass"
+  - criterion: "max_messages: fails when message count > max"
+    status: PASS
+    evidence: "test_assertions.py::TestMaxMessages::test_max_messages_fail"
+  - criterion: "max_messages: returns ERROR when max parameter is missing"
+    status: PASS
+    evidence: "test_assertions.py::TestMaxMessages::test_max_messages_missing_param"
+  - criterion: "min_messages: passes when message count >= min"
+    status: PASS
+    evidence: "test_assertions.py::TestMinMessages::test_min_messages_pass"
+  - criterion: "min_messages: fails when message count < min"
+    status: PASS
+    evidence: "test_assertions.py::TestMinMessages::test_min_messages_fail"
+  - criterion: "min_messages: returns ERROR when min parameter is missing"
+    status: PASS
+    evidence: "test_assertions.py::TestMinMessages::test_min_messages_missing_param"
+  - criterion: "max_cost: returns ERROR when no model is provided"
+    status: PASS
+    evidence: "test_assertions.py::TestMaxCost::test_max_cost_no_model"
+  - criterion: "max_cost: returns ERROR when max parameter is missing"
+    status: PASS
+    evidence: "test_assertions.py::TestMaxCost::test_max_cost_missing_param"
+  - criterion: "max_cost: passes when estimated cost <= budget"
+    status: PASS
+    evidence: "test_assertions.py::TestMaxCost::test_max_cost_pass (mocked)"
+  - criterion: "max_cost: fails when estimated cost > budget"
+    status: PASS
+    evidence: "test_assertions.py::TestMaxCost::test_max_cost_fail (mocked)"
+  - criterion: "valid_format: passes when prompt has at least one message"
+    status: PASS
+    evidence: "test_assertions.py::TestValidFormat::test_valid_format_pass"
+  - criterion: "valid_format: fails when prompt has zero messages"
+    status: PASS
+    evidence: "test_assertions.py::TestValidFormat::test_valid_format_fail_empty"
+  - criterion: "matches_regex: passes when content matches pattern"
+    status: PASS
+    evidence: "test_assertions.py::TestMatchesRegex::test_matches_regex_pass"
+  - criterion: "matches_regex: fails when content does not match pattern"
+    status: PASS
+    evidence: "test_assertions.py::TestMatchesRegex::test_matches_regex_fail"
+  - criterion: "matches_regex: returns ERROR for invalid regex pattern"
+    status: PASS
+    evidence: "test_assertions.py::TestMatchesRegex::test_matches_regex_invalid"
+  - criterion: "matches_regex: returns ERROR when pattern parameter is missing"
+    status: PASS
+    evidence: "test_assertions.py::TestMatchesRegex::test_matches_regex_missing_param"
+  - criterion: "not_matches_regex: passes when content does NOT match pattern"
+    status: PASS
+    evidence: "test_assertions.py::TestNotMatchesRegex::test_not_matches_regex_pass"
+  - criterion: "not_matches_regex: fails when content matches pattern"
+    status: PASS
+    evidence: "test_assertions.py::TestNotMatchesRegex::test_not_matches_regex_fail"
+  - criterion: "not_matches_regex: returns ERROR for invalid regex"
+    status: PASS
+    evidence: "test_assertions.py::TestNotMatchesRegex::test_not_matches_regex_invalid"
+  - criterion: "not_matches_regex: returns ERROR when pattern parameter is missing"
+    status: PASS
+    evidence: "test_assertions.py::TestNotMatchesRegex::test_not_matches_regex_missing_param"
+  - criterion: "token_ratio: passes when system/user ratio <= ratio_max"
+    status: PASS
+    evidence: "test_assertions.py::TestTokenRatio::test_token_ratio_pass"
+  - criterion: "token_ratio: fails when system/user ratio > ratio_max"
+    status: PASS
+    evidence: "test_assertions.py::TestTokenRatio::test_token_ratio_fail"
+  - criterion: "token_ratio: fails when no user messages exist (infinity case)"
+    status: PASS
+    evidence: "test_assertions.py::TestTokenRatio::test_token_ratio_no_user_messages"
+  - criterion: "token_ratio: returns ERROR when ratio_max parameter is missing"
+    status: PASS
+    evidence: "test_assertions.py::TestTokenRatio::test_token_ratio_missing_param"
+  - criterion: "has_metadata: passes when all required keys exist"
+    status: PASS
+    evidence: "test_assertions.py::TestHasMetadata::test_has_metadata_pass"
+  - criterion: "has_metadata: fails when keys are missing"
+    status: PASS
+    evidence: "test_assertions.py::TestHasMetadata::test_has_metadata_fail"
+  - criterion: "has_metadata: returns ERROR when keys parameter is missing"
+    status: PASS
+    evidence: "test_assertions.py::TestHasMetadata::test_has_metadata_missing_param"
+  - criterion: "content_hash: passes when hash matches"
+    status: PASS
+    evidence: "test_assertions.py::TestContentHash::test_content_hash_pass"
+  - criterion: "content_hash: fails when hash does not match"
+    status: PASS
+    evidence: "test_assertions.py::TestContentHash::test_content_hash_fail"
+  - criterion: "content_hash: passes and reports current hash when no expected hash is provided"
+    status: PASS
+    evidence: "test_assertions.py::TestContentHash::test_content_hash_no_expected"
+
+  # -- 4. TEST RUNNER --
+  - criterion: "load_test_suite() parses a YAML file into a PromptTestSuite"
+    status: PASS
+    evidence: "test_runner.py::TestLoadTestSuite::test_load_valid_file"
+  - criterion: "load_test_suite() raises FileNotFoundError for missing files"
+    status: PASS
+    evidence: "test_runner.py::TestLoadTestSuite::test_load_nonexistent_file"
+  - criterion: "load_test_suite() raises ValueError for invalid YAML"
+    status: PASS
+    evidence: "test_runner.py::TestLoadTestSuite::test_load_invalid_yaml"
+  - criterion: "load_test_suite() raises ValueError when 'prompt' field is missing"
+    status: PASS
+    evidence: "test_runner.py::TestLoadTestSuite::test_load_missing_prompt_field"
+  - criterion: "load_test_suite() raises ValueError when YAML root is not a mapping"
+    status: PASS
+    evidence: "test_runner.py::TestLoadTestSuite::test_load_not_a_mapping"
+  - criterion: "load_test_suite() defaults suite name to file stem"
+    status: PASS
+    evidence: "test_runner.py::TestLoadTestSuite::test_suite_name_defaults_to_stem"
+  - criterion: "load_test_suite() resolves prompt path relative to test file directory"
+    status: PASS
+    evidence: "test_runner.py::TestLoadTestSuite::test_relative_prompt_path; runner.py lines 67-69"
+  - criterion: "load_test_suite() raises ValueError when tests is not a list"
+    status: PASS
+    evidence: "test_runner.py::TestLoadTestSuiteEdgeCases::test_tests_not_a_list"
+  - criterion: "load_test_suite() raises ValueError when a test entry is not a mapping"
+    status: PASS
+    evidence: "test_runner.py::TestLoadTestSuiteEdgeCases::test_test_entry_not_a_mapping"
+  - criterion: "run_test_suite() returns ERROR results when prompt file cannot be parsed"
+    status: PASS
+    evidence: "test_runner.py::TestRunTestSuite::test_run_missing_prompt"
+  - criterion: "run_test_suite() with fail_fast=True stops after first failure"
+    status: PASS
+    evidence: "test_runner.py::TestRunTestSuite::test_fail_fast"
+  - criterion: "run_test_suite() passes model_override to run_assertion"
+    status: PASS
+    evidence: "runner.py line 132: effective_model = model_override or suite.model"
+  - criterion: "discover_test_files() finds test_*.yaml and test_*.yml files"
+    status: PASS
+    evidence: "test_runner.py::TestDiscoverTestFiles::test_discover_in_directory and test_discover_yml_extension"
+  - criterion: "discover_test_files() returns [path] when given a single file"
+    status: PASS
+    evidence: "test_runner.py::TestDiscoverTestFiles::test_discover_single_file"
+  - criterion: "discover_test_files() returns [] for nonexistent paths"
+    status: PASS
+    evidence: "test_runner.py::TestDiscoverTestFiles::test_discover_nonexistent"
+  - criterion: "discover_test_files() finds nested test files via rglob"
+    status: PASS
+    evidence: "test_runner.py::TestDiscoverTestFiles::test_discover_nested"
+  - criterion: "run_test_file() returns a PromptTestReport with correct totals"
+    status: PASS
+    evidence: "test_runner.py::TestRunTestFile::test_run_file"
+  - criterion: "run_test_file() records duration_ms > 0"
+    status: PASS
+    evidence: "test_runner.py::TestRunTestFile::test_run_file asserts report.duration_ms > 0"
+  - criterion: "run_test_directory() runs all discovered test files"
+    status: PASS
+    evidence: "test_runner.py::TestRunTestDirectory::test_run_directory"
+  - criterion: "run_test_directory() returns total=0 for empty directories"
+    status: PASS
+    evidence: "test_runner.py::TestRunTestDirectory::test_run_empty_directory"
+  - criterion: "run_test_directory() produces ERROR results for broken test files"
+    status: PASS
+    evidence: "test_runner.py::TestRunTestDirectory::test_run_directory_with_bad_file"
+
+  # -- 5. OUTPUT REPORTERS --
+  - criterion: "format_text() includes suite name in output"
+    status: PASS
+    evidence: "test_reporter.py::TestFormatText::test_contains_suite_name"
+  - criterion: "format_text() shows PASS, FAIL, ERR, SKIP indicators"
+    status: PASS
+    evidence: "test_reporter.py::TestFormatText tests for all four indicators"
+  - criterion: "format_text() shows failure/error messages inline"
+    status: PASS
+    evidence: "test_reporter.py::TestFormatText::test_contains_failure_message"
+  - criterion: "format_text() shows summary counts"
+    status: PASS
+    evidence: "test_reporter.py::TestFormatText::test_contains_summary"
+  - criterion: "format_text() shows duration in milliseconds"
+    status: PASS
+    evidence: "test_reporter.py::TestFormatTextDuration::test_contains_duration"
+  - criterion: "format_text() includes Rich markup for colored output"
+    status: PASS
+    evidence: "test_reporter.py::TestFormatTextDuration::test_contains_rich_markup"
+  - criterion: "format_text() handles empty report without crashing"
+    status: PASS
+    evidence: "test_reporter.py::TestFormatText::test_empty_report"
+  - criterion: "format_json() returns valid JSON"
+    status: PASS
+    evidence: "test_reporter.py::TestFormatJson::test_valid_json"
+  - criterion: "format_json() includes all required fields"
+    status: PASS
+    evidence: "test_reporter.py::TestFormatJson::test_json_fields"
+  - criterion: "format_json() suites array is populated correctly"
+    status: PASS
+    evidence: "test_reporter.py::TestFormatJson::test_json_suites"
+  - criterion: "format_json() handles empty report"
+    status: PASS
+    evidence: "test_reporter.py::TestFormatJson::test_empty_json"
+  - criterion: "format_junit() returns valid XML with <?xml declaration"
+    status: PASS
+    evidence: "test_reporter.py::TestFormatJunit::test_xml_declaration and test_valid_xml"
+  - criterion: "format_junit() root is <testsuites> with correct attributes"
+    status: PASS
+    evidence: "test_reporter.py::TestFormatJunit::test_testsuites_attributes"
+  - criterion: "format_junit() creates <testsuite> elements"
+    status: PASS
+    evidence: "test_reporter.py::TestFormatJunit::test_testsuite_element"
+  - criterion: "format_junit() creates <testcase> elements with name and classname"
+    status: PASS
+    evidence: "test_reporter.py::TestFormatJunit::test_testcase_elements"
+  - criterion: "format_junit() adds <failure> subelements"
+    status: PASS
+    evidence: "test_reporter.py::TestFormatJunit::test_failure_element"
+  - criterion: "format_junit() adds <error> subelements"
+    status: PASS
+    evidence: "test_reporter.py::TestFormatJunit::test_error_element"
+  - criterion: "format_junit() adds <skipped> subelements"
+    status: PASS
+    evidence: "test_reporter.py::TestFormatJunit::test_skipped_element"
+  - criterion: "format_junit() handles empty report"
+    status: PASS
+    evidence: "test_reporter.py::TestFormatJunit::test_empty_junit"
+
+  # -- 6. CLI --
+  - criterion: "app is a typer.Typer instance with name='prompttest'"
+    status: PASS
+    evidence: "cli.py lines 15-19"
+  - criterion: "run command accepts a path argument"
+    status: PASS
+    evidence: "cli.py line 33; tested in TestRunBasic and TestRunDirectory"
+  - criterion: "--format / -f option accepts text, json, junit (default: text)"
+    status: PASS
+    evidence: "cli.py lines 34-36; tested in TestRunFormatJson and TestRunFormatJunit"
+  - criterion: "--model / -m option passes model override to runner"
+    status: PASS
+    evidence: "cli.py lines 37-39, 58, 61"
+  - criterion: "--fail-fast flag causes runner to stop on first failure"
+    status: PASS
+    evidence: "cli.py lines 40-42; tested in TestRunFailFast"
+  - criterion: "--pattern / -p option sets glob pattern"
+    status: PASS
+    evidence: "cli.py lines 43-45; tested in TestRunPattern"
+  - criterion: "--verbose / -v flag is accepted"
+    status: PASS
+    evidence: "cli.py lines 46-48; tested in TestRunVerbose"
+  - criterion: "No arguments shows help text (no_args_is_help=True)"
+    status: PASS
+    evidence: "cli.py line 18"
+  - criterion: "Path not found exits with code 2"
+    status: PASS
+    evidence: "cli.py lines 53-55; tested in TestErrors::test_nonexistent_path"
+  - criterion: "All tests passed exits with code 0"
+    status: PASS
+    evidence: "Tested in TestRunExitCodes::test_passing_tests_exit_0"
+  - criterion: "Any failures or errors exits with code 1"
+    status: PASS
+    evidence: "cli.py lines 80-81; tested in TestRunExitCodes::test_failing_tests_exit_1"
+  - criterion: "No tests found exits with code 0 with 'No tests found' message"
+    status: PASS
+    evidence: "cli.py lines 64-66; tested in TestRunDirectory::test_run_empty_directory"
+  - criterion: "init command creates test_example.yaml"
+    status: PASS
+    evidence: "cli.py lines 84-126; tested in TestInit::test_init_creates_example_file"
+  - criterion: "init command refuses to overwrite existing file (exits 1)"
+    status: PASS
+    evidence: "cli.py lines 120-122; tested in TestInit::test_init_refuses_overwrite"
+  - criterion: "init-generated file contains has_role, max_tokens, contains, not_contains, valid_format, max_cost"
+    status: PASS
+    evidence: "cli.py init template lines 87-117 includes all six assertion types"
+
+  # -- 7. __init__.py --
+  - criterion: "__version__ is '1.0.0'"
+    status: PASS
+    evidence: "Verified via script output"
+  - criterion: "Exports all 6 model classes"
+    status: PASS
+    evidence: "__init__.py lines 8-15"
+  - criterion: "Exports run_assertion from assertions"
+    status: PASS
+    evidence: "__init__.py line 16"
+  - criterion: "Exports runner functions"
+    status: PASS
+    evidence: "__init__.py lines 17-23"
+  - criterion: "Exports reporter functions"
+    status: PASS
+    evidence: "__init__.py line 24"
+  - criterion: "__all__ list matches all exports exactly"
+    status: PASS
+    evidence: "Verified via script: 15 exports, all match"
+
+  # -- 8-12. TEST FILES --
+  - criterion: "test_models.py minimum 15 test cases"
+    status: PASS
+    evidence: "AST count: 18 test functions"
+  - criterion: "test_assertions.py minimum 55 test cases"
+    status: PASS
+    evidence: "AST count: 58 test functions"
+  - criterion: "test_runner.py minimum 19 test cases"
+    status: PASS
+    evidence: "AST count: 21 test functions"
+  - criterion: "test_reporter.py minimum 20 test cases"
+    status: PASS
+    evidence: "AST count: 24 test functions"
+  - criterion: "test_cli.py minimum 24 test cases"
+    status: PASS
+    evidence: "AST count: 25 test functions"
+
+  # -- 13. CONFTEST --
+  - criterion: "Provides simple_prompt fixture"
+    status: PASS
+    evidence: "conftest.py lines 12-38"
+  - criterion: "Provides multi_message_prompt fixture"
+    status: PASS
+    evidence: "conftest.py lines 41-70"
+  - criterion: "Provides minimal_prompt fixture"
+    status: PASS
+    evidence: "conftest.py lines 73-81"
+  - criterion: "Provides empty_prompt fixture"
+    status: PASS
+    evidence: "conftest.py lines 84-92"
+  - criterion: "Provides tmp_prompt_file fixture"
+    status: PASS
+    evidence: "conftest.py lines 95-109"
+  - criterion: "Provides tmp_test_file fixture"
+    status: PASS
+    evidence: "conftest.py lines 112-132"
+  - criterion: "All file fixtures use tmp_path"
+    status: PASS
+    evidence: "Both tmp_prompt_file and tmp_test_file use tmp_path parameter"
+
+  # -- 14. README.md --
+  - criterion: "Title mentions prompttest"
+    status: PASS
+    evidence: "README.md line 1"
+  - criterion: "Install command uses 'pip install prompttest-ai'"
+    status: PASS
+    evidence: "README.md line 17"
+  - criterion: "Documents all 15 assertion types with YAML examples"
+    status: PASS
+    evidence: "README.md lines 90-260"
+  - criterion: "Documents both CLI commands: run and init"
+    status: PASS
+    evidence: "README.md lines 24 and 61"
+  - criterion: "Documents all run options"
+    status: PASS
+    evidence: "README.md options table lines 53-59"
+  - criterion: "Documents all three output formats"
+    status: PASS
+    evidence: "README.md lines 278-311"
+  - criterion: "Documents programmatic API usage"
+    status: PASS
+    evidence: "README.md lines 315-343"
+  - criterion: "Documents exit codes: 0, 1, 2"
+    status: PASS
+    evidence: "README.md lines 373-380"
+  - criterion: "Documents CI integration examples"
+    status: PASS
+    evidence: "README.md lines 348-371"
+  - criterion: "Documents test file YAML format"
+    status: PASS
+    evidence: "README.md lines 73-84"
+  - criterion: "Documents skip and case_sensitive test options"
+    status: PASS
+    evidence: "README.md lines 263-274"
+  - criterion: "Assertion type count matches actual enum count"
+    status: PASS
+    evidence: "README says 15; enum has 15"
+  - criterion: "All assertion types in README exist in enum"
+    status: PASS
+    evidence: "All 15 types match"
+  - criterion: "README reflects current test count"
+    status: PASS
+    evidence: "Badge shows 146 passing; pytest confirms 146 passed"
+  - criterion: "No placeholder URLs remain"
+    status: PASS
+    evidence: "No placeholder URLs found in README or pyproject.toml"
+  - criterion: "License section present"
+    status: PASS
+    evidence: "README.md line 382"
+
+additional_findings:
+  - severity: LOW
+    file: "packages/prompttest/src/prompttest/cli.py"
+    location: "run() verbose parameter, line 47"
+    finding: "--verbose flag is accepted but has no effect on output. It is a no-op."
+    suggestion: "Implement verbose behavior or document it as reserved for future use."
+
+  - severity: LOW
+    file: "sprint-005.yaml"
+    location: "acceptance criterion for _ASSERTIONS registry"
+    finding: "Sprint contract says 14 entries but there are 15 registered entries. The parenthetical clarification is accurate."
+    suggestion: "No code change needed. Sprint contract text should say 15."
+
+  - severity: LOW
+    file: "packages/prompttest/tests/test_cli.py"
+    location: "Missing --model CLI test"
+    finding: "No CLI test verifies --model option reaches the runner. Noted in sprint notes as a gap."
+    suggestion: "Add a test that mocks run_test_file and checks model_override argument."
+
+  - severity: LOW
+    file: "packages/prompttest/src/prompttest/runner.py"
+    location: "run_test_suite() lines 118-130"
+    finding: "Only catches ParseError and FileNotFoundError. PermissionError or UnicodeDecodeError would propagate unhandled."
+    suggestion: "Consider catching broader exceptions with a specific error message."
+
+blind_spots:
+  - "No test for --model CLI option passing model_override to runner"
+  - "--verbose flag is untested for behavioral differences (currently a no-op)"
+  - "No test for Unicode content in prompts"
+  - "No test for very large prompt files"
+  - "No test for PermissionError when reading prompt or test files"
+  - "No test for model_override propagation through run_test_directory"
+
+summary: |
+  All 146 tests pass with zero failures and zero warnings. Every acceptance
+  criterion in the sprint contract is met with verifiable evidence. The
+  implementation is clean, well-structured, and thoroughly tested. The only
+  findings are LOW severity: a no-op --verbose flag, a minor contract typo
+  (14 vs 15 registry entries), and a missing CLI test for --model. None of
+  these are functional issues. The work is ready.

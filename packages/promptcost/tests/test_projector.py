@@ -22,6 +22,10 @@ class TestParseVolume:
         with pytest.raises(ValueError, match="Invalid volume"):
             _parse_volume("1000 calls")
 
+    def test_whitespace_around_slash(self):
+        assert _parse_volume("1000 / day") == 1000
+        assert _parse_volume("  100 / hour  ") == 2400
+
 
 class TestProjectCost:
     def test_projection_math(self, simple_prompt):

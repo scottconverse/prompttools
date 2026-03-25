@@ -161,3 +161,56 @@ class TestLockfile:
         )
         assert "@org/pkg" in lockfile.resolved
         assert lockfile.resolved["@org/pkg"].version == "1.0.0"
+
+
+class TestValidationRejection:
+    """Tests that models reject missing required fields."""
+
+    def test_prompt_entry_missing_file(self) -> None:
+        with pytest.raises(Exception):
+            PromptEntry(name="hello")  # type: ignore[call-arg]
+
+    def test_prompt_entry_missing_name(self) -> None:
+        with pytest.raises(Exception):
+            PromptEntry(file=Path("hello.yaml"))  # type: ignore[call-arg]
+
+    def test_package_manifest_missing_name(self) -> None:
+        with pytest.raises(Exception):
+            PackageManifest(  # type: ignore[call-arg]
+                version="1.0.0", description="d", author="a"
+            )
+
+    def test_package_manifest_missing_version(self) -> None:
+        with pytest.raises(Exception):
+            PackageManifest(  # type: ignore[call-arg]
+                name="@org/pkg", description="d", author="a"
+            )
+
+    def test_package_manifest_missing_description(self) -> None:
+        with pytest.raises(Exception):
+            PackageManifest(  # type: ignore[call-arg]
+                name="@org/pkg", version="1.0.0", author="a"
+            )
+
+    def test_package_manifest_missing_author(self) -> None:
+        with pytest.raises(Exception):
+            PackageManifest(  # type: ignore[call-arg]
+                name="@org/pkg", version="1.0.0", description="d"
+            )
+
+    def test_catalog_entry_missing_required(self) -> None:
+        with pytest.raises(Exception):
+            CatalogEntry(  # type: ignore[call-arg]
+                name="@org/pkg",
+                # missing latest_version, published_at, integrity
+            )
+
+    def test_catalog_entry_model_defaults_none(self) -> None:
+        entry = CatalogEntry(
+            name="@org/pkg",
+            latest_version="1.0.0",
+            published_at="2025-01-01T00:00:00+00:00",
+            integrity="abc123",
+        )
+        assert entry.model is None
+        assert entry.total_prompts == 0

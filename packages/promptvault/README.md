@@ -124,12 +124,18 @@ manifest = PackageManifest(...)
 resolved = resolve_dependencies(manifest, registry)
 ```
 
-## Development
+## Testing
+
+promptvault has 99 tests covering models, registry, resolver, lockfile, and CLI.
 
 ```bash
 pip install -e ".[dev]"
 pytest
 ```
+
+## Part of the prompttools Suite
+
+promptvault is part of the [prompttools](https://github.com/scottconverse/prompttools) monorepo, a suite of developer tools for managing LLM prompt files.
 
 ## License
 

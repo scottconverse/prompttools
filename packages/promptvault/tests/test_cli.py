@@ -309,3 +309,59 @@ class TestVerify:
         )
         assert result.exit_code == 0
         assert "passed" in result.output
+
+
+class TestPublishDuplicate:
+    """Tests for publishing duplicate version via CLI."""
+
+    def test_publish_duplicate_version_exits_1(self, tmp_path: Path) -> None:
+        pkg_dir = _create_manifest_dir(tmp_path)
+        reg_dir = tmp_path / "registry"
+        # First publish succeeds
+        runner.invoke(
+            app, ["publish", str(pkg_dir), "--registry", str(reg_dir)]
+        )
+        # Second publish of same version should fail
+        result = runner.invoke(
+            app, ["publish", str(pkg_dir), "--registry", str(reg_dir)]
+        )
+        assert result.exit_code == 1
+        assert "already exists" in result.output
+
+
+class TestInfoJsonOutput:
+    """Tests for info --format json."""
+
+    def test_info_json_output(self, tmp_path: Path) -> None:
+        reg_dir = tmp_path / "registry"
+        pkg_dir = _create_manifest_dir(tmp_path)
+        runner.invoke(
+            app, ["publish", str(pkg_dir), "--registry", str(reg_dir)]
+        )
+        result = runner.invoke(
+            app,
+            ["info", "@test/cli-pkg", "--registry", str(reg_dir), "--format", "json"],
+        )
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["name"] == "@test/cli-pkg"
+        assert data["latest_version"] == "1.0.0"
+
+
+class TestListJsonOutput:
+    """Tests for list --format json."""
+
+    def test_list_json_output(self, tmp_path: Path) -> None:
+        reg_dir = tmp_path / "registry"
+        pkg_dir = _create_manifest_dir(tmp_path)
+        runner.invoke(
+            app, ["publish", str(pkg_dir), "--registry", str(reg_dir)]
+        )
+        result = runner.invoke(
+            app, ["list", "--registry", str(reg_dir), "--format", "json"],
+        )
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert isinstance(data, list)
+        assert len(data) == 1
+        assert data[0]["name"] == "@test/cli-pkg"

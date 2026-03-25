@@ -8,7 +8,7 @@ Shared foundation library for the prompttools suite.
 
 ## What It Provides
 
-`prompttools-core` is the shared library used by all tools in the prompttools suite (`promptfmt`, `promptcost`, `prompttest`, `promptlint`). It provides:
+`prompttools-core` is the shared library used by all tools in the prompttools suite (`promptfmt`, `promptcost`, `prompttest`, `promptlint`, `promptdiff`, `promptvault`). It provides:
 
 - **Multi-format prompt parsing** -- YAML, JSON, Markdown, and plain text
 - **Tokenization engine** -- tiktoken-based token counting with model-aware encoding selection
@@ -279,6 +279,16 @@ vars = extract_variables("Hello {{name}}, your order {id} is in <status>")
 ```
 
 Common HTML tags (`div`, `span`, `p`, etc.) are automatically excluded from XML-style variable detection.
+
+## Testing
+
+The package includes 211 tests covering all modules:
+
+```bash
+pytest packages/prompttools-core/tests/ -v
+```
+
+Test files: `test_models.py`, `test_parser.py`, `test_formats.py`, `test_tokenizer.py`, `test_profiles.py`, `test_config.py`, `test_cache.py`, `test_plugins.py`, `test_errors.py`.
 
 ## License
 

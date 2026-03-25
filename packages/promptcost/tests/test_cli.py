@@ -287,6 +287,73 @@ class TestDelta:
 # ---------------------------------------------------------------------------
 
 
+class TestEstimateDirectory:
+    def test_estimate_directory_shows_table(self, tmp_path: Path):
+        _write_prompt(tmp_path, "a.yaml", SIMPLE_PROMPT_YAML)
+        _write_prompt(tmp_path, "b.yaml", SIMPLE_PROMPT_YAML)
+        result = runner.invoke(app, ["estimate", str(tmp_path)])
+        assert result.exit_code == 0
+        assert "a.yaml" in result.output
+        assert "b.yaml" in result.output
+
+    def test_estimate_directory_with_project(self, tmp_path: Path):
+        _write_prompt(tmp_path, "a.yaml", SIMPLE_PROMPT_YAML)
+        result = runner.invoke(
+            app, ["estimate", "--project", "500/hour", str(tmp_path)]
+        )
+        assert result.exit_code == 0
+        assert "Monthly" in result.output or "Annual" in result.output
+
+
+class TestEstimateOutputTokensEdge:
+    def test_output_tokens_zero_exits_2(self, tmp_path: Path):
+        f = _write_prompt(tmp_path, "prompt.yaml", SIMPLE_PROMPT_YAML)
+        result = runner.invoke(
+            app, ["estimate", "--output-tokens", "0", str(f)]
+        )
+        assert result.exit_code == 2
+
+    def test_output_tokens_negative_exits_2(self, tmp_path: Path):
+        f = _write_prompt(tmp_path, "prompt.yaml", SIMPLE_PROMPT_YAML)
+        result = runner.invoke(
+            app, ["estimate", "--output-tokens", "-5", str(f)]
+        )
+        assert result.exit_code == 2
+
+
+class TestBudgetLimitZero:
+    def test_budget_limit_zero_fails(self, tmp_path: Path):
+        f = _write_prompt(tmp_path, "prompt.yaml", SIMPLE_PROMPT_YAML)
+        result = runner.invoke(
+            app, ["budget", "--limit", "0", str(f)]
+        )
+        # Should fail with BadParameter or non-zero exit
+        assert result.exit_code != 0
+
+
+class TestDeltaOutputTokens:
+    def test_delta_with_output_tokens(self, tmp_path: Path):
+        old = _write_prompt(tmp_path, "old.yaml", SIMPLE_PROMPT_YAML)
+        new = _write_prompt(tmp_path, "new.yaml", EXPENSIVE_PROMPT_YAML)
+        result = runner.invoke(
+            app, ["delta", "--output-tokens", "500", str(old), str(new)]
+        )
+        assert result.exit_code == 0
+        assert "Delta" in result.output or "delta" in result.output.lower()
+
+
+class TestCompareJsonFormat:
+    def test_compare_json_has_estimates_key(self, tmp_path: Path):
+        f = _write_prompt(tmp_path, "prompt.yaml", SIMPLE_PROMPT_YAML)
+        result = runner.invoke(
+            app,
+            ["estimate", "--format", "json", "--compare", "--models", "gpt-4o,gpt-4o-mini", str(f)],
+        )
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert "estimates" in data
+
+
 class TestErrors:
     def test_estimate_nonexistent_file(self, tmp_path: Path):
         bad = tmp_path / "nonexistent.yaml"

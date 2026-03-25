@@ -150,9 +150,22 @@ def estimate(
         console.print(f"\n  [bold]Total per-call cost:[/bold] {_format_cost(total_cost)}")
 
         if volume:
-            calls = int(volume.split("/")[0])
-            monthly = total_cost * calls * 30
-            console.print(f"  [bold]Monthly @{volume}:[/bold] {_format_cost(monthly)}")
+            from promptcost.projector import _parse_volume
+            try:
+                calls_per_day = _parse_volume(volume)
+            except ValueError:
+                console.print(
+                    "[red]Error:[/red] Invalid volume format. "
+                    "Use: N/hour, N/day, N/week, or N/month"
+                )
+                raise typer.Exit(2)
+            daily = total_cost * calls_per_day
+            monthly = daily * 30
+            annual = daily * 365
+            console.print(f"\n  [bold]Projections ({volume}):[/bold]")
+            console.print(f"    Daily:   {_format_cost(daily)}")
+            console.print(f"    Monthly: {_format_cost(monthly)}")
+            console.print(f"    Annual:  {_format_cost(annual)}")
     else:
         console.print(f"[red]Path not found: {path}[/red]")
         raise typer.Exit(2)

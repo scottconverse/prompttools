@@ -35,3 +35,7 @@ class TestCompareModels:
         result = compare_models(simple_prompt, models)
         for m in models:
             assert m in result.estimates
+
+    def test_all_unknown_models_raises(self, simple_prompt):
+        with pytest.raises(ValueError, match="No valid model profiles found"):
+            compare_models(simple_prompt, ["fake-model-1", "fake-model-2"])

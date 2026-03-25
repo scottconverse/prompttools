@@ -1,0 +1,323 @@
+sprint: 3
+title: "promptfmt-ai: Verification and hardening sprint"
+source: "Verification audit of packages/promptfmt/ source, tests, config, and docs"
+created: "2026-03-25"
+scope: medium
+
+# -------------------------------------------------------------------
+# CURRENT STATE
+# -------------------------------------------------------------------
+# The promptfmt package has a complete implementation:
+#   - formatter.py: Pipeline orchestrator with FmtConfig dataclass,
+#     format_content (5-stage pipeline), format_file (with equivalence check)
+#   - equivalence.py: Semantic equivalence checker (messages, variables, metadata)
+#   - cli.py: Typer CLI with format + init commands, all PRD options
+#   - rules/whitespace.py: 5 whitespace normalization rules
+#   - rules/delimiters.py: Section delimiter normalization (5 styles)
+#   - rules/variables.py: Variable syntax normalization (3 styles, HTML exclusions)
+#   - rules/wrapping.py: Line wrapping with code/URL/table/heading exclusions
+#   - rules/structure.py: YAML/JSON structure normalization (key sorting, indentation)
+#   - 4 test files: test_cli.py (~27), test_formatter.py (~10),
+#     test_variables.py (9), test_whitespace.py (9) = ~55 tests total
+#
+# GAPS FOUND:
+#   - NO tests for rules/delimiters.py
+#   - NO tests for rules/wrapping.py
+#   - NO tests for rules/structure.py
+#   - NO tests for equivalence.py
+#   - No [project.urls] in pyproject.toml (no monorepo links)
+#   - watchfiles is a dependency but no watch command exists in CLI
+#   - FmtConfig validation (invalid styles) not tested
+#   - README claims watchfiles dependency but CLI has no watch feature
+# -------------------------------------------------------------------
+
+dependencies:
+  - "prompttools-core-ai>=1.0 must be installed (provides parse_file, parse_stdin, PromptFile, PromptFormat)"
+  - "typer[all]>=0.12 must be installed"
+  - "rich>=13.0 must be installed"
+  - "PyYAML must be available (used by rules/structure.py)"
+
+deliverables:
+  # -- 1. PYPROJECT.TOML --
+  - file: "packages/promptfmt/pyproject.toml"
+    description: "Package metadata and build configuration for promptfmt-ai."
+    action: modify
+    acceptance:
+      - "name is promptfmt-ai"
+      - "version is 1.0.0"
+      - "requires-python is >=3.9"
+      - "Development Status classifier is 4 - Beta"
+      - "dependencies include prompttools-core-ai>=1.0,<2.0"
+      - "dependencies include typer[all]>=0.12"
+      - "dependencies include rich>=13.0"
+      - "[project.scripts] maps promptfmt to promptfmt.cli:app"
+      - "[tool.hatch.build.targets.wheel] packages points to [promptfmt] (matches flat layout)"
+      - "[project.urls] section exists with Homepage and Repository pointing to the prompttools monorepo GitHub URL (not a standalone repo URL)"
+      - "watchfiles dependency is removed if no watch command exists in CLI, OR a watch command is added to CLI"
+
+  # -- 2. __init__.py --
+  - file: "packages/promptfmt/promptfmt/__init__.py"
+    description: "Public API surface with convenience imports."
+    action: modify
+    acceptance:
+      - "__version__ is 1.0.0"
+      - "Exports FmtConfig, FormattedResult, format_content, format_file from formatter"
+      - "Exports is_equivalent from equivalence"
+      - "__all__ list contains exactly these 5 names"
+      - "from promptfmt import format_file, FmtConfig, is_equivalent works without error"
+
+  # -- 3. FORMATTER --
+  - file: "packages/promptfmt/promptfmt/formatter.py"
+    description: "Pipeline orchestrator that applies all formatting rules in order."
+    action: modify
+    acceptance:
+      - "FmtConfig raises ValueError for invalid delimiter_style"
+      - "FmtConfig raises ValueError for invalid variable_style"
+      - "FmtConfig defaults: delimiter_style=###, variable_style=double_brace, max_line_length=120, indent=2, sort_metadata_keys=True"
+      - "format_content() applies rules in order: whitespace, delimiters, variables, wrapping, structure"
+      - "format_content() skips wrapping when max_line_length is 0"
+      - "format_content() applies structure normalization only for YAML and JSON formats"
+      - "format_content() re-applies whitespace after structure normalization"
+      - "format_file() returns FormattedResult with path, original_content, formatted_content, changed, equivalent, error"
+      - "format_file() sets changed=True when formatted content differs from original"
+      - "format_file() sets equivalent=True when semantic content is preserved"
+      - "format_file() sets error string when equivalence check fails"
+      - "format_file() uses FmtConfig defaults when config is None"
+
+  # -- 4. EQUIVALENCE --
+  - file: "packages/promptfmt/promptfmt/equivalence.py"
+    description: "Semantic equivalence checker for pre/post formatting."
+    action: modify
+    acceptance:
+      - "is_equivalent() returns True for identical PromptFiles"
+      - "is_equivalent() returns False when message counts differ"
+      - "is_equivalent() returns False when message roles differ"
+      - "is_equivalent() returns True when message content differs only in whitespace"
+      - "is_equivalent() returns False when message content differs semantically"
+      - "is_equivalent() returns False when variable names differ"
+      - "is_equivalent() returns True when variable names match but syntax differs"
+      - "is_equivalent() returns False when metadata values differ"
+      - "is_equivalent() returns True for empty messages, variables, and metadata"
+
+  # -- 5. CLI --
+  - file: "packages/promptfmt/promptfmt/cli.py"
+    description: "Typer CLI entry point for promptfmt with format and init commands."
+    action: modify
+    acceptance:
+      - "app is a typer.Typer instance with name=promptfmt and no_args_is_help=True"
+      - "format command accepts a path argument (file or directory)"
+      - "--check flag exits with code 1 when files need formatting"
+      - "--check flag does NOT modify any files"
+      - "--diff flag shows unified diff output"
+      - "--delimiter-style accepts ###, ---, ===, ***, ~~~"
+      - "--variable-style accepts double_brace, single_brace, angle_bracket"
+      - "--max-line-length accepts an integer (0 to disable)"
+      - "--quiet / -q suppresses non-error output"
+      - "format exits with code 0 on success"
+      - "format exits with code 2 when errors occur"
+      - "format on empty directory exits 0 with No prompt files found message"
+      - "init creates .promptfmt.yaml with correct default content"
+      - "init exits 1 when .promptfmt.yaml already exists"
+      - "_collect_files() returns empty list for non-existent path (no crash)"
+
+  # -- 6. RULES: WHITESPACE --
+  - file: "packages/promptfmt/promptfmt/rules/whitespace.py"
+    description: "Whitespace normalization rules (5 rules)."
+    action: modify
+    acceptance:
+      - "Strips trailing whitespace from every line"
+      - "Normalizes CRLF and CR line endings to LF"
+      - "Removes leading blank lines at file start"
+      - "Collapses 3+ consecutive blank lines to exactly 2"
+      - "Ensures file ends with exactly one newline"
+      - "Returns empty string for empty input"
+      - "Returns empty string for whitespace-only input"
+      - "Is idempotent (apply(apply(x)) == apply(x))"
+
+  # -- 7. RULES: DELIMITERS --
+  - file: "packages/promptfmt/promptfmt/rules/delimiters.py"
+    description: "Section delimiter normalization across 5 styles."
+    action: modify
+    acceptance:
+      - "Converts --- to target style"
+      - "Converts === to target style"
+      - "Converts *** to target style"
+      - "Converts ~~~ to target style"
+      - "Preserves code blocks -- delimiters inside code blocks are not modified"
+      - "Preserves non-delimiter lines unchanged"
+      - "Handles mixed delimiter styles in one file"
+      - "Is idempotent (apply(apply(x, s), s) == apply(x, s))"
+
+  # -- 8. RULES: VARIABLES --
+  - file: "packages/promptfmt/promptfmt/rules/variables.py"
+    description: "Variable syntax normalization across 3 styles."
+    action: modify
+    acceptance:
+      - "Converts {var} to {{var}} when target is double_brace"
+      - "Converts <var> to {{var}} when target is double_brace"
+      - "Converts {{var}} to {var} when target is single_brace"
+      - "Converts {{var}} to <var> when target is angle_bracket"
+      - "Preserves code blocks -- variables inside triple-backtick blocks are not modified"
+      - "Preserves inline code spans -- variables inside backticks are not modified"
+      - "Excludes common HTML tags (div, span, p, br, etc.) from angle_bracket detection"
+      - "Handles mixed variable styles in a single line"
+      - "Is idempotent"
+
+  # -- 9. RULES: WRAPPING --
+  - file: "packages/promptfmt/promptfmt/rules/wrapping.py"
+    description: "Line wrapping at word boundaries with exclusions."
+    action: modify
+    acceptance:
+      - "Wraps lines exceeding max_length at word boundaries"
+      - "Does NOT wrap lines inside code blocks"
+      - "Does NOT wrap URL lines"
+      - "Does NOT wrap table rows (lines starting with |)"
+      - "Does NOT wrap heading lines (lines starting with #)"
+      - "Preserves leading indentation on continuation lines"
+      - "Returns content unchanged when max_length is 0 or negative"
+      - "Short lines (under max_length) are not modified"
+      - "Is idempotent"
+
+  # -- 10. RULES: STRUCTURE --
+  - file: "packages/promptfmt/promptfmt/rules/structure.py"
+    description: "YAML/JSON structure normalization with key sorting."
+    action: modify
+    acceptance:
+      - "apply_yaml() re-serializes YAML with consistent indentation"
+      - "apply_yaml() sorts metadata keys with priority ordering: model, name, description, defaults first"
+      - "apply_yaml() sorts message object keys: role before content"
+      - "apply_yaml() returns original content on YAML parse failure (graceful degradation)"
+      - "apply_yaml() returns original content when YAML is not a mapping"
+      - "apply_json() re-serializes JSON with consistent indentation"
+      - "apply_json() sorts keys with same priority ordering as YAML"
+      - "apply_json() returns original content on JSON parse failure (graceful degradation)"
+      - "apply_json() returns original content when JSON is not an object"
+      - "apply() dispatches to apply_yaml for YAML format"
+      - "apply() dispatches to apply_json for JSON format"
+      - "apply() returns content unchanged for TEXT and MARKDOWN formats"
+      - "sort_keys=False preserves original key ordering"
+
+  # -- 11. NEW TEST: DELIMITERS --
+  - file: "packages/promptfmt/tests/test_delimiters.py"
+    description: "Unit tests for delimiter normalization rules."
+    action: create
+    acceptance:
+      - "Minimum 10 test cases"
+      - "Tests converting --- to ### (default target)"
+      - "Tests converting === to ###"
+      - "Tests converting *** to ###"
+      - "Tests converting ~~~ to ###"
+      - "Tests converting --- to === when target is ==="
+      - "Tests converting --- to ~~~ when target is ~~~"
+      - "Tests that code blocks are preserved -- delimiters inside code are not converted"
+      - "Tests that non-delimiter lines are not modified"
+      - "Tests file with mixed delimiter styles"
+      - "Tests idempotency: apply(apply(content, style), style) == apply(content, style)"
+
+  # -- 12. NEW TEST: WRAPPING --
+  - file: "packages/promptfmt/tests/test_wrapping.py"
+    description: "Unit tests for line wrapping rules."
+    action: create
+    acceptance:
+      - "Minimum 10 test cases"
+      - "Tests wrapping a line that exceeds max_length"
+      - "Tests that short lines are not modified"
+      - "Tests that code block lines are never wrapped"
+      - "Tests that URL lines are never wrapped"
+      - "Tests that table rows (starting with |) are never wrapped"
+      - "Tests that heading lines (starting with #) are never wrapped"
+      - "Tests that leading indentation is preserved on continuation lines"
+      - "Tests max_length=0 disables wrapping"
+      - "Tests max_length with negative value disables wrapping"
+      - "Tests idempotency"
+
+  # -- 13. NEW TEST: STRUCTURE --
+  - file: "packages/promptfmt/tests/test_structure.py"
+    description: "Unit tests for YAML/JSON structure normalization."
+    action: create
+    acceptance:
+      - "Minimum 12 test cases"
+      - "Tests apply_yaml() sorts metadata keys with priority ordering"
+      - "Tests apply_yaml() puts role before content in message objects"
+      - "Tests apply_yaml() uses consistent indentation"
+      - "Tests apply_yaml() gracefully handles invalid YAML (returns original)"
+      - "Tests apply_yaml() gracefully handles non-mapping YAML (returns original)"
+      - "Tests apply_yaml() with sort_keys=False preserves key order"
+      - "Tests apply_json() sorts keys with priority ordering"
+      - "Tests apply_json() uses consistent indentation"
+      - "Tests apply_json() gracefully handles invalid JSON (returns original)"
+      - "Tests apply_json() gracefully handles non-object JSON (returns original)"
+      - "Tests apply() routes YAML format to apply_yaml"
+      - "Tests apply() routes JSON format to apply_json"
+      - "Tests apply() returns content unchanged for TEXT format"
+
+  # -- 14. NEW TEST: EQUIVALENCE --
+  - file: "packages/promptfmt/tests/test_equivalence.py"
+    description: "Unit tests for semantic equivalence checking."
+    action: create
+    acceptance:
+      - "Minimum 10 test cases"
+      - "Tests identical PromptFiles are equivalent"
+      - "Tests different message counts are not equivalent"
+      - "Tests different message roles are not equivalent"
+      - "Tests whitespace-only content differences are equivalent"
+      - "Tests semantic content differences are not equivalent"
+      - "Tests different variable names are not equivalent"
+      - "Tests same variable names with different syntax are equivalent (variable names match)"
+      - "Tests different metadata values are not equivalent"
+      - "Tests empty messages/variables/metadata are equivalent"
+      - "Tests _normalize_whitespace collapses runs and strips"
+
+  # -- 15. README --
+  - file: "packages/promptfmt/README.md"
+    description: "Package README with accurate feature documentation."
+    action: modify
+    acceptance:
+      - "Installation section shows pip install promptfmt-ai"
+      - "Dependencies list matches pyproject.toml dependencies (watchfiles removed if no watch command, or watch command documented if added)"
+      - "All CLI commands documented match actual commands in cli.py (format, init)"
+      - "All CLI options documented match actual options in cli.py"
+      - "Programmatic usage section shows correct import paths that actually work"
+      - "Exit code table matches actual exit codes in cli.py (0, 1, 2)"
+      - "Formatting rules section accurately describes all 5 rule categories"
+      - "Configuration table matches FmtConfig defaults"
+      - "README reflects actual test count after test additions"
+      - "No fabricated URLs, emails, or claims"
+
+constraints:
+  - "Use dataclasses for FmtConfig and FormattedResult (not Pydantic -- match existing pattern)"
+  - "Use Typer for CLI with Rich console for terminal output"
+  - "Use hatchling as build backend"
+  - "Flat source layout: promptfmt/ (not src/promptfmt/)"
+  - "All imports from prompttools-core use: from prompttools_core import ..."
+  - "All tests use pytest (no unittest)"
+  - "Do NOT rewrite files that already pass all acceptance criteria"
+  - "watchfiles dependency must either be justified by a watch command or removed"
+  - "Minimum 80 test cases total across all test files after this sprint"
+
+notes: |
+  The promptfmt package is ALREADY IMPLEMENTED. All source files and CLI work.
+  This sprint is about:
+
+  1. VERIFICATION: Run pytest and confirm all existing ~55 tests pass. Fix any failures.
+  2. TEST GAP FILLING: Four modules have zero dedicated tests:
+     - rules/delimiters.py -- create test_delimiters.py (10+ tests)
+     - rules/wrapping.py -- create test_wrapping.py (10+ tests)
+     - rules/structure.py -- create test_structure.py (12+ tests)
+     - equivalence.py -- create test_equivalence.py (10+ tests)
+     This adds 42+ new tests, bringing total to ~97+.
+  3. PYPROJECT.TOML HARDENING:
+     - Add [project.urls] with monorepo links
+     - Resolve watchfiles dependency: remove it (no watch command exists) or add a watch command
+  4. README ACCURACY:
+     - Dependencies list must match pyproject.toml exactly
+     - If watchfiles is removed, remove it from README dependencies
+     - If watch command is added, document it in README
+  5. E2E TESTING: Invoke promptfmt format and promptfmt init with real files
+     and verify correct behavior, exit codes, and output.
+
+  The Builder should NOT rewrite files that are already correct.
+  Only modify files where acceptance criteria are not met.
+
+  IMPORTANT: The source layout is FLAT (promptfmt/ not src/promptfmt/).
+  The pyproject.toml build config already reflects this correctly.

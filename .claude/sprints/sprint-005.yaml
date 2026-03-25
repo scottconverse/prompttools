@@ -1,0 +1,411 @@
+sprint: 5
+title: "prompttest-ai: Verification and hardening sprint"
+source: "packages/prompttest/ (all source and test files)"
+created: "2026-03-25"
+scope: medium
+
+# -------------------------------------------------------------------
+# CURRENT STATE
+# -------------------------------------------------------------------
+# The prompttest package has a complete implementation:
+#   - models.py: 5 Pydantic v2 models + 2 enums (15 AssertionType
+#     values, 4 PromptTestStatus values, PromptTestCase, AssertionResult,
+#     PromptTestSuite, PromptTestReport)
+#   - assertions.py: 14 registered assertion implementations with
+#     _register decorator pattern, run_assertion dispatcher
+#   - runner.py: load_test_suite, run_test_suite, run_test_file,
+#     run_test_directory, discover_test_files
+#   - reporter.py: 3 output formatters (text/Rich, JSON, JUnit XML)
+#   - cli.py: Typer CLI with run + init commands, 6 CLI options
+#   - __init__.py: Public API exports, __version__ = "1.0.0"
+#   - pyproject.toml: Fully configured with hatchling build
+#   - 137 tests across 5 test files + conftest.py
+#   - README.md: Comprehensive docs with all 15 assertion types
+#
+# This sprint focuses on VERIFYING everything works end-to-end,
+# filling test gaps, fixing metadata issues, and hardening for release.
+# -------------------------------------------------------------------
+
+dependencies:
+  - "prompttools-core-ai>=1.0 must be installed (provides parse_file, PromptFile, Tokenizer, Message)"
+  - "promptcost-ai>=1.0 must be installed (used by max_cost assertion)"
+  - "tiktoken must be available (transitive dep via prompttools-core)"
+deliverables:
+  # -- 1. PYPROJECT.TOML --
+  - file: "packages/prompttest/pyproject.toml"
+    description: "Package metadata and build configuration for prompttest-ai."
+    action: modify
+    acceptance:
+      - "name is 'prompttest-ai'"
+      - "version is '1.0.0'"
+      - "requires-python is '>=3.9'"
+      - "dependencies include prompttools-core-ai>=1.0,<2.0"
+      - "dependencies include promptcost-ai>=1.0,<2.0"
+      - "dependencies include typer[all]>=0.12"
+      - "dependencies include pyyaml>=6.0"
+      - "dependencies include rich>=13.0"
+      - "dependencies include pydantic>=2.0"
+      - "[project.scripts] maps 'prompttest' to 'prompttest.cli:app'"
+      - "[tool.hatch.build.targets.wheel] packages points to 'src/prompttest'"
+      - "dev extras include pytest>=8.0 and pytest-cov"
+      - "Development Status classifier is '4 - Beta'"
+      - "[project.urls] section exists with Homepage and Repository pointing to prompttools monorepo GitHub URL (not standalone repo, not placeholder)"
+  # -- 2. DATA MODELS --
+  - file: "packages/prompttest/src/prompttest/models.py"
+    description: "Pydantic v2 data models for test cases, suites, results, and reports."
+    action: modify
+    acceptance:
+      - "AssertionType enum has exactly 15 values: contains, not_contains, has_role, has_variables, max_tokens, min_tokens, max_messages, min_messages, max_cost, valid_format, matches_regex, not_matches_regex, token_ratio, has_metadata, content_hash"
+      - "AssertionType is a str Enum (isinstance check passes)"
+      - "PromptTestStatus enum has exactly 4 values: passed, failed, error, skipped"
+      - "PromptTestCase has 'assert' alias that maps to assert_type field"
+      - "PromptTestCase.model_config has populate_by_name=True"
+      - "PromptTestCase._validate_bounds rejects negative max, min, and ratio_max values"
+      - "PromptTestCase defaults: case_sensitive=False, skip=False, skip_reason=None, text=None, role=None, variables=None"
+      - "AssertionResult has fields: test_name, status, assert_type, message, expected, actual, duration_ms"
+      - "AssertionResult.duration_ms defaults to 0.0"
+      - "PromptTestSuite has fields: name, prompt_path, model, tests"
+      - "PromptTestSuite.model defaults to None"
+      - "PromptTestReport has fields: suites, total, passed, failed, errors, skipped, duration_ms"
+      - "PromptTestReport() with no args produces total=0, passed=0, failed=0, suites=[]"
+      - "All models use Pydantic v2 BaseModel (not v1)"
+  # -- 3. ASSERTION ENGINE --
+  - file: "packages/prompttest/src/prompttest/assertions.py"
+    description: "Registry-based assertion functions for all 15 assertion types."
+    action: modify
+    acceptance:
+      - "run_assertion() returns SKIPPED status when test_case.skip is True"
+      - "run_assertion() returns ERROR status for unknown assertion type"
+      - "run_assertion() catches exceptions from assertion functions and returns ERROR status"
+      - "run_assertion() records duration_ms on every result"
+      - "run_assertion() passes suite_model as fallback when test_case.model is None"
+      - "_ASSERTIONS registry has exactly 14 entries (all AssertionType values are registered)"
+      - "contains: passes when text is found (case-insensitive by default)"
+      - "contains: fails when text is not found"
+      - "contains: respects case_sensitive=True"
+      - "contains: returns ERROR when text parameter is missing"
+      - "not_contains: passes when text is NOT found"
+      - "not_contains: fails when text IS found"
+      - "not_contains: returns ERROR when text parameter is missing"
+      - "has_role: passes when prompt has a message with the specified role"
+      - "has_role: fails when role is not present"
+      - "has_role: returns ERROR when role parameter is missing"
+      - "has_variables: passes when all required variables exist"
+      - "has_variables: fails with missing variable names in message"
+      - "has_variables: returns ERROR when variables parameter is missing"
+      - "max_tokens: passes when token count <= max"
+      - "max_tokens: fails when token count > max"
+      - "max_tokens: returns ERROR when max parameter is missing"
+      - "min_tokens: passes when token count >= min"
+      - "min_tokens: fails when token count < min"
+      - "min_tokens: returns ERROR when min parameter is missing"      - "max_messages: passes when message count <= max"
+      - "max_messages: fails when message count > max"
+      - "max_messages: returns ERROR when max parameter is missing"
+      - "min_messages: passes when message count >= min"
+      - "min_messages: fails when message count < min"
+      - "min_messages: returns ERROR when min parameter is missing"
+      - "max_cost: returns ERROR when no model is provided"
+      - "max_cost: returns ERROR when max parameter is missing"
+      - "max_cost: passes when estimated cost <= budget"
+      - "max_cost: fails when estimated cost > budget"
+      - "valid_format: passes when prompt has at least one message"
+      - "valid_format: fails when prompt has zero messages"
+      - "matches_regex: passes when content matches pattern"
+      - "matches_regex: fails when content does not match pattern"
+      - "matches_regex: returns ERROR for invalid regex pattern"
+      - "matches_regex: returns ERROR when pattern parameter is missing"
+      - "not_matches_regex: passes when content does NOT match pattern"
+      - "not_matches_regex: fails when content matches pattern"
+      - "not_matches_regex: returns ERROR for invalid regex"
+      - "not_matches_regex: returns ERROR when pattern parameter is missing"
+      - "token_ratio: passes when system/user ratio <= ratio_max"
+      - "token_ratio: fails when system/user ratio > ratio_max"
+      - "token_ratio: fails when no user messages exist (infinity case)"
+      - "token_ratio: returns ERROR when ratio_max parameter is missing"
+      - "has_metadata: passes when all required keys exist in prompt metadata"
+      - "has_metadata: fails when keys are missing"
+      - "has_metadata: returns ERROR when keys parameter is missing"
+      - "content_hash: passes when hash matches prompt content_hash"
+      - "content_hash: fails when hash does not match"
+      - "content_hash: passes and reports current hash when no expected hash is provided"
+  # -- 4. TEST RUNNER --
+  - file: "packages/prompttest/src/prompttest/runner.py"
+    description: "Test execution engine: discovers, loads, and runs YAML test suites."
+    action: modify
+    acceptance:
+      - "load_test_suite() parses a YAML file into a PromptTestSuite"
+      - "load_test_suite() raises FileNotFoundError for missing files"
+      - "load_test_suite() raises ValueError for invalid YAML"
+      - "load_test_suite() raises ValueError when 'prompt' field is missing"
+      - "load_test_suite() raises ValueError when YAML root is not a mapping"
+      - "load_test_suite() defaults suite name to file stem when 'suite' key is absent"
+      - "load_test_suite() resolves prompt path relative to test file directory"
+      - "load_test_suite() raises ValueError when tests is not a list"
+      - "load_test_suite() raises ValueError when a test entry is not a mapping"
+      - "run_test_suite() returns ERROR results for all tests when prompt file cannot be parsed"
+      - "run_test_suite() with fail_fast=True stops after first failure and SKIPs remaining tests"
+      - "run_test_suite() passes model_override to run_assertion when provided"
+      - "discover_test_files() finds test_*.yaml and test_*.yml files"
+      - "discover_test_files() returns [path] when given a single file"
+      - "discover_test_files() returns [] for nonexistent paths"
+      - "discover_test_files() finds nested test files via rglob"
+      - "run_test_file() returns a PromptTestReport with correct totals"
+      - "run_test_file() records duration_ms > 0"
+      - "run_test_directory() runs all discovered test files"
+      - "run_test_directory() returns total=0 for empty directories"
+      - "run_test_directory() produces ERROR results for broken test files without crashing"
+  # -- 5. OUTPUT REPORTERS --
+  - file: "packages/prompttest/src/prompttest/reporter.py"
+    description: "Formats PromptTestReport as text (Rich), JSON, or JUnit XML."
+    action: modify
+    acceptance:
+      - "format_text() includes suite name in output"
+      - "format_text() shows PASS, FAIL, ERR, SKIP indicators"
+      - "format_text() shows failure/error messages inline"
+      - "format_text() shows summary with passed/failed/errors/skipped counts and total"
+      - "format_text() shows duration in milliseconds"
+      - "format_text() includes Rich markup for colored output"
+      - "format_text() handles empty report without crashing"
+      - "format_json() returns valid JSON parseable by json.loads()"
+      - "format_json() includes total, passed, failed, errors, skipped, duration_ms, suites fields"
+      - "format_json() suites array contains suite_name and results"
+      - "format_json() handles empty report"
+      - "format_junit() returns valid XML with <?xml declaration"
+      - "format_junit() root element is <testsuites> with tests, failures, errors, skipped attributes"
+      - "format_junit() creates <testsuite> elements for each suite"
+      - "format_junit() creates <testcase> elements with name and classname attributes"
+      - "format_junit() adds <failure> subelements for failed tests with message and expected/actual"
+      - "format_junit() adds <error> subelements for errored tests"
+      - "format_junit() adds <skipped> subelements for skipped tests"
+      - "format_junit() handles empty report"
+  # -- 6. CLI --
+  - file: "packages/prompttest/src/prompttest/cli.py"
+    description: "Typer CLI entry point with run and init commands."
+    action: modify
+    acceptance:
+      - "app is a typer.Typer instance with name='prompttest'"
+      - "run command accepts a path argument (file or directory)"
+      - "--format / -f option accepts text, json, junit (default: text)"
+      - "--model / -m option passes model override to runner"
+      - "--fail-fast flag causes runner to stop on first failure"
+      - "--pattern / -p option sets glob pattern for test discovery (default: test_*.yaml)"
+      - "--verbose / -v flag is accepted"
+      - "No arguments shows help text (no_args_is_help=True)"
+      - "Path not found exits with code 2"
+      - "All tests passed exits with code 0"
+      - "Any failures or errors exits with code 1"
+      - "No tests found exits with code 0 with 'No tests found' message"
+      - "init command creates test_example.yaml with sample test cases"
+      - "init command refuses to overwrite existing test_example.yaml (exits 1)"
+      - "init-generated file contains has_role, max_tokens, contains, not_contains, valid_format, max_cost examples"
+
+  # -- 7. __init__.py --
+  - file: "packages/prompttest/src/prompttest/__init__.py"
+    description: "Public API surface with convenience imports."
+    action: modify
+    acceptance:
+      - "__version__ is '1.0.0'"
+      - "Exports all 6 model classes: AssertionResult, AssertionType, PromptTestCase, PromptTestReport, PromptTestStatus, PromptTestSuite"
+      - "Exports run_assertion from assertions"
+      - "Exports discover_test_files, load_test_suite, run_test_directory, run_test_file, run_test_suite from runner"
+      - "Exports format_json, format_junit, format_text from reporter"
+      - "__all__ list matches all exports exactly"
+  # -- 8. TEST: MODELS --
+  - file: "packages/prompttest/tests/test_models.py"
+    description: "Unit tests for all Pydantic data models."
+    action: modify
+    acceptance:
+      - "Minimum 15 test cases"
+      - "Tests all 15 AssertionType enum values exist"
+      - "Tests AssertionType string values match enum names"
+      - "Tests all 4 PromptTestStatus values exist"
+      - "Tests PromptTestCase creation via 'assert' alias"
+      - "Tests PromptTestCase creation via assert_type field name"
+      - "Tests PromptTestCase default values (None, False)"
+      - "Tests PromptTestCase skip and skip_reason fields"
+      - "Tests PromptTestCase variables list field"
+      - "Tests PromptTestCase _validate_bounds rejects negative max value"
+      - "Tests PromptTestCase _validate_bounds rejects negative min value"
+      - "Tests PromptTestCase _validate_bounds rejects negative ratio_max value"
+      - "Tests AssertionResult creation for passed, failed, and error statuses"
+      - "Tests PromptTestSuite creation with model and without model"
+      - "Tests PromptTestReport empty defaults"
+      - "Tests PromptTestReport with populated data"
+
+  # -- 9. TEST: ASSERTIONS --
+  - file: "packages/prompttest/tests/test_assertions.py"
+    description: "Unit tests for all 14 assertion implementations."
+    action: modify
+    acceptance:
+      - "Minimum 55 test cases"
+      - "Tests every assertion type for pass, fail, and missing-parameter cases"      - "Tests contains case-insensitive (default) and case-sensitive modes"
+      - "Tests not_contains pass and fail"
+      - "Tests has_role for system, user, assistant roles"
+      - "Tests has_variables with single and multiple variables"
+      - "Tests max_tokens pass and fail"
+      - "Tests min_tokens pass and fail"
+      - "Tests max_messages pass, fail, and exact-boundary"
+      - "Tests min_messages pass and fail"
+      - "Tests max_cost with no model (error), pass, and fail (using mocked promptcost)"
+      - "Tests valid_format pass and fail (empty messages)"
+      - "Tests matches_regex pass, fail, invalid pattern, and missing param"
+      - "Tests not_matches_regex pass, fail, invalid pattern, and missing param"
+      - "Tests token_ratio pass, fail, no-user-messages edge case"
+      - "Tests has_metadata pass, fail, empty metadata"
+      - "Tests content_hash pass, fail, and no-expected-hash recording mode"
+      - "Tests skip functionality with and without skip_reason"
+      - "Tests duration_ms is recorded (>= 0)"
+
+  # -- 10. TEST: RUNNER --
+  - file: "packages/prompttest/tests/test_runner.py"
+    description: "Unit and integration tests for the test runner."
+    action: modify
+    acceptance:
+      - "Minimum 19 test cases"
+      - "Tests load_test_suite with valid file"
+      - "Tests load_test_suite with nonexistent file (FileNotFoundError)"
+      - "Tests load_test_suite with invalid YAML (ValueError)"
+      - "Tests load_test_suite with missing prompt field (ValueError)"
+      - "Tests load_test_suite with non-mapping YAML root (ValueError)"      - "Tests load_test_suite defaults suite name to file stem"
+      - "Tests load_test_suite resolves relative prompt path"
+      - "Tests run_test_suite with passing tests"
+      - "Tests run_test_suite with missing prompt file (all ERROR)"
+      - "Tests run_test_suite with fail_fast (FAILED + SKIPPED)"
+      - "Tests discover_test_files in directory"
+      - "Tests discover_test_files with .yml extension"
+      - "Tests discover_test_files with single file"
+      - "Tests discover_test_files with nonexistent path"
+      - "Tests discover_test_files in nested directories"
+      - "Tests run_test_file produces correct report totals"
+      - "Tests run_test_directory with multiple test files"
+      - "Tests run_test_directory with empty directory"
+      - "Tests run_test_directory gracefully handles broken test files"
+
+  # -- 11. TEST: REPORTER --
+  - file: "packages/prompttest/tests/test_reporter.py"
+    description: "Unit tests for all three output formatters."
+    action: modify
+    acceptance:
+      - "Minimum 20 test cases"
+      - "Tests format_text() contains suite name"
+      - "Tests format_text() contains PASS, FAIL, ERR, SKIP indicators"
+      - "Tests format_text() contains summary counts"
+      - "Tests format_text() shows failure detail messages"
+      - "Tests format_text() handles empty report"
+      - "Tests format_json() returns valid JSON"
+      - "Tests format_json() contains all required fields (total, passed, failed, errors, skipped, duration_ms)"
+      - "Tests format_json() suites array is populated correctly"
+      - "Tests format_json() handles empty report"      - "Tests format_junit() returns valid XML"
+      - "Tests format_junit() root is <testsuites> with correct attributes"
+      - "Tests format_junit() creates <testsuite> elements"
+      - "Tests format_junit() creates <testcase> elements with name and classname"
+      - "Tests format_junit() adds <failure> subelements"
+      - "Tests format_junit() adds <error> subelements"
+      - "Tests format_junit() adds <skipped> subelements"
+      - "Tests format_junit() includes XML declaration"
+      - "Tests format_junit() handles empty report"
+
+  # -- 12. TEST: CLI --
+  - file: "packages/prompttest/tests/test_cli.py"
+    description: "End-to-end CLI tests using typer.testing.CliRunner."
+    action: modify
+    acceptance:
+      - "Minimum 24 test cases"
+      - "Tests run on single test file exits 0 with passing tests"
+      - "Tests run output contains PASS indicator"
+      - "Tests passing tests exit code 0"
+      - "Tests failing tests exit code 1"
+      - "Tests failing output mentions FAIL"
+      - "Tests --format json produces valid JSON with total/passed/failed fields"
+      - "Tests --format json counts match expected values"
+      - "Tests --format json with failures has failed > 0"
+      - "Tests --format junit produces valid XML with <?xml and <testsuites>"
+      - "Tests --format junit contains <testcase> elements"
+      - "Tests --format junit with failures contains <failure> element"
+      - "Tests --fail-fast stops on first failure (1 failed + 2 skipped)"
+      - "Tests --verbose flag is accepted without error"
+      - "Tests run on directory discovers multiple test suites"      - "Tests run on empty directory prints 'No tests found' and exits 0"
+      - "Tests nonexistent path exits with code 2"
+      - "Tests malformed YAML test file is handled gracefully"
+      - "Tests test file with missing prompt field is handled gracefully"
+      - "Tests test file with nonexistent prompt file produces errors"
+      - "Tests directory with mixed good/bad test files runs without crashing"
+      - "Tests init creates example file with suite/prompt/tests structure"
+      - "Tests init refuses to overwrite existing file (exits 1)"
+      - "Tests init-generated file contains has_role, max_tokens, contains assertion examples"
+      - "Tests --pattern option with custom glob pattern discovers correct files"
+
+  # -- 13. TEST: CONFTEST --
+  - file: "packages/prompttest/tests/conftest.py"
+    description: "Shared pytest fixtures for prompttest tests."
+    action: modify
+    acceptance:
+      - "Provides simple_prompt fixture (system + user messages, variables, metadata)"
+      - "Provides multi_message_prompt fixture (system + user + assistant + user, variables)"
+      - "Provides minimal_prompt fixture (single user message, no metadata)"
+      - "Provides empty_prompt fixture (no messages)"
+      - "Provides tmp_prompt_file fixture (real YAML file on disk)"
+      - "Provides tmp_test_file fixture (real YAML test file referencing tmp_prompt_file)"
+      - "All file fixtures use tmp_path for test isolation"
+  # -- 14. README.md --
+  - file: "packages/prompttest/README.md"
+    description: "Package documentation with accurate feature descriptions and examples."
+    action: modify
+    acceptance:
+      - "Title mentions prompttest"
+      - "Install command uses 'pip install prompttest-ai' (not 'prompttest')"
+      - "Documents all 15 assertion types with YAML examples"
+      - "Documents both CLI commands: run and init"
+      - "Documents all run options: --format, --model, --fail-fast, --verbose, --pattern"
+      - "Documents all three output formats: text, json, junit"
+      - "Documents programmatic API usage with correct import paths"
+      - "Documents exit codes: 0 (pass/no tests), 1 (failure/error), 2 (path not found)"
+      - "Documents CI integration examples (GitHub Actions, GitLab CI)"
+      - "Documents test file YAML format with suite, prompt, model, tests fields"
+      - "Documents skip and case_sensitive test options"
+      - "Assertion type count ('15 assertion types') matches actual AssertionType enum count"
+      - "All assertion types listed in README exist in AssertionType enum"
+      - "README reflects current test count in badge or description"
+      - "No placeholder URLs remain"
+      - "License section present"
+constraints:
+  - "Use Pydantic v2 BaseModel for all data classes (not v1 syntax)"
+  - "Use Typer for CLI with Rich console for terminal output (match promptfmt/promptcost pattern)"
+  - "Use hatchling as build backend (match existing pyproject.toml pattern)"
+  - "Source layout: src/prompttest/ (not flat layout)"
+  - "All imports from prompttools-core use: from prompttools_core import ..."
+  - "All tests use pytest with fixtures from conftest.py (no unittest)"
+  - "CLI tests use typer.testing.CliRunner"
+  - "max_cost assertion uses lazy import of promptcost (optional dependency pattern)"
+  - "Development Status classifier must be '4 - Beta'"
+  - "Minimum 137 test cases total across all test files (currently at 137 -- do not regress)"
+  - "pyproject.toml must have [project.urls] with Homepage and Repository pointing to real monorepo URL"
+notes: |
+  The prompttest package is ALREADY IMPLEMENTED. All source files, CLI,
+  and tests exist and appear complete. This sprint is about:
+
+  1. VERIFICATION: Run pytest and confirm all 137 tests pass. Fix any failures.
+  2. GAP ANALYSIS: Compare implementation against acceptance criteria above.
+     Identified gaps to fill:
+     - pyproject.toml is MISSING [project.urls] section entirely (no Homepage/Repository URLs)
+     - test_models.py: No tests for _validate_bounds rejecting negative values (3 tests needed)
+     - test_cli.py: No test for --pattern option with custom glob
+     - test_cli.py: No test for --model override via CLI
+     - test_runner.py: No test for 'tests' field not being a list
+     - test_runner.py: No test for invalid test entry (not a mapping)
+     - --verbose flag is accepted but behavior is identical to non-verbose (flag is a no-op)
+  3. HARDENING:
+     - Add [project.urls] section to pyproject.toml
+     - Ensure Development Status stays at '4 - Beta'
+     - Confirm all exports in __init__.py match actual implementations
+     - Verify README assertion count (15) matches actual enum count (15) -- CONFIRMED CORRECT
+  4. E2E TESTING: Invoke prompttest run and prompttest init with real files and verify:
+     - Text output is readable and correctly formatted
+     - JSON output is valid and complete
+     - JUnit XML output is well-formed
+     - --fail-fast works correctly
+     - Error cases produce clean output
+     - Exit codes are correct for all scenarios
+
+  The Builder should NOT rewrite files that are already correct.
+  Only modify files where acceptance criteria are not met.

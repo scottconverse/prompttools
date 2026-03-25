@@ -1,0 +1,12 @@
+name: research-and-edit
+stages:
+  - name: research
+    file: stage-1.yaml
+    persona: researcher
+    expected_output_tokens: 500
+  - name: editing
+    file: stage-2.yaml
+    persona: editor
+    expected_output_tokens: 300
+    depends_on:
+      - research

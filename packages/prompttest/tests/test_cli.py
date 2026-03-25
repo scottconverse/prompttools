@@ -323,6 +323,42 @@ class TestInit:
 
 
 # ---------------------------------------------------------------------------
+# run --pattern
+# ---------------------------------------------------------------------------
+
+
+class TestRunPattern:
+    def test_pattern_option_discovers_custom_glob(self, tmp_path: Path):
+        prompt = _make_prompt(tmp_path)
+        rel_prompt = prompt.relative_to(tmp_path)
+        # Create files with non-default naming pattern
+        for name in ["check_first.yaml", "check_second.yaml"]:
+            (tmp_path / name).write_text(
+                f"suite: {name}\n"
+                f"prompt: {rel_prompt}\n"
+                f"tests:\n"
+                f"  - name: valid\n"
+                f"    assert: valid_format\n",
+                encoding="utf-8",
+            )
+        # Also create a standard test_*.yaml that should NOT be found
+        (tmp_path / "test_standard.yaml").write_text(
+            f"suite: standard\n"
+            f"prompt: {rel_prompt}\n"
+            f"tests:\n"
+            f"  - name: valid\n"
+            f"    assert: valid_format\n",
+            encoding="utf-8",
+        )
+        result = runner.invoke(
+            app, ["run", "--format", "json", "--pattern", "check_*.yaml", str(tmp_path)]
+        )
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["total"] == 2  # Only the check_* files
+
+
+# ---------------------------------------------------------------------------
 # Error handling
 # ---------------------------------------------------------------------------
 
