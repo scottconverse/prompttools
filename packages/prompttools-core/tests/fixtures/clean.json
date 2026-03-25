@@ -1,0 +1,12 @@
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a helpful assistant that provides concise answers. If you are uncertain, say so."
+    },
+    {
+      "role": "user",
+      "content": "What are the three main benefits of regular exercise?"
+    }
+  ]
+}

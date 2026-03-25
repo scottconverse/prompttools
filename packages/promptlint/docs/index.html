@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>promptlint — Static analysis for LLM prompts</title>
+    <meta name="description" content="Static analysis tool for LLM prompts. Catches token bloat, security vulnerabilities, hallucination risk, structural issues, and prompt smells. 34 built-in rules across 9 categories.">
+    <meta property="og:title" content="promptlint">
+    <meta property="og:description" content="Static analysis for LLM prompts — treats prompts as code. 34 built-in rules, pipeline analysis, model profiles, auto-fix, and CI integration.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://scottconverse.github.io/promptlint/">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d1117;
+            --bg-raised: #161b22;
+            --bg-card: #1c2129;
+            --border: #30363d;
+            --border-hover: #58a6ff;
+            --text: #c9d1d9;
+            --text-muted: #8b949e;
+            --text-bright: #e6edf3;
+            --accent: #58a6ff;
+            --accent-dim: #1f6feb;
+            --green: #3fb950;
+            --green-dim: #238636;
+            --orange: #d29922;
+            --red: #f85149;
+            --purple: #bc8cff;
+            --cyan: #39d2c0;
+            --yellow: #e3b341;
+            --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 12px rgba(0,0,0,0.2);
+            --mono: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', Consolas, monospace;
+            --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        .container { max-width: 860px; margin: 0 auto; padding: 0 1.5rem; }
+        .wide-container { max-width: 1080px; margin: 0 auto; padding: 0 1.5rem; }
+
+        /* ── Header ── */
+        header {
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 0;
+        }
+        .header-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header-logo {
+            font-family: var(--mono);
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-bright);
+        }
+        .header-logo span { color: var(--accent); }
+        .header-links {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.85rem;
+        }
+        .header-links a { color: var(--text-muted); }
+        .header-links a:hover { color: var(--text-bright); text-decoration: none; }
+
+        /* ── Hero ── */
+        .hero {
+            padding: 5rem 0 4rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+        .hero-name {
+            font-family: var(--mono);
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--text-bright);
+            letter-spacing: -0.03em;
+            margin-bottom: 0.75rem;
+        }
+        .hero-tagline {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            max-width: 540px;
+            margin: 0 auto 0.5rem;
+        }
+        .hero-tagline code {
+            color: var(--accent);
+            font-family: var(--mono);
+            font-size: 1.1rem;
+        }
+        .hero-version {
+            font-family: var(--mono);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 2.5rem;
+        }
+        .hero-install {
+            background: var(--bg-raised);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            display: inline-block;
+            font-family: var(--mono);
+            font-size: 0.95rem;
+            margin-bottom: 2rem;
+            cursor: pointer;
+            transition: border-color 0.15s ease;
+            position: relative;
+        }
+        .hero-install:hover { border-color: var(--accent); }
+        .hero-install .prompt { color: var(--text-muted); }
+        .hero-install .cmd { color: var(--green); }
+        .hero-install .pkg { color: var(--text-bright); }
+        .hero-install .copy-hint {
+            font-family: var(--sans);
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-left: 1.5rem;
+        }
+        .hero-cta {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn {
+            display: inline-block;
+            padding: 0.7rem 1.5rem;
+            font-family: var(--sans);
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.15s ease;
+            border: 1px solid transparent;
+        }
+        .btn:hover { text-decoration: none; }
+        .btn-primary { background: var(--accent-dim); color: #fff; border-color: var(--accent-dim); }
+        .btn-primary:hover { background: var(--accent); border-color: var(--accent); }
+        .btn-secondary { background: var(--bg-raised); color: var(--text); border-color: var(--border); }
+        .btn-secondary:hover { border-color: var(--text-muted); color: var(--text-bright); }
+
+        /* ── Stats ── */
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 3.5rem;
+            padding: 2rem 0;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+        .stat { text-align: center; }
+        .stat-number {
+            font-family: var(--mono);
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+            line-height: 1.2;
+        }
+        .stat-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--text-muted);
+        }
+
+        /* ── Sections ── */
+        .section { padding: 3.5rem 0; border-bottom: 1px solid var(--border); }
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-bright);
+            margin-bottom: 0.4rem;
+        }
+        .section-intro {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            font-size: 1rem;
+        }
+
+        /* ── Code blocks ── */
+        .code-block {
+            background: var(--bg-raised);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem 1.5rem;
+            font-family: var(--mono);
+            font-size: 0.85rem;
+            line-height: 1.7;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+        }
+        .code-block .comment { color: var(--text-muted); }
+        .code-block .cmd { color: var(--green); }
+        .code-block .flag { color: var(--cyan); }
+        .code-block .arg { color: var(--orange); }
+        .code-block .str { color: var(--yellow); }
+        .code-block .key { color: var(--purple); }
+        .code-block .val { color: var(--cyan); }
+        .code-block .prompt { color: var(--text-muted); }
+        .code-label {
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        /* ── Rule table ── */
+        .rule-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        .rule-table th {
+            text-align: left;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+        }
+        .rule-table td {
+            padding: 0.7rem 1rem;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+        .rule-table tr:last-child td { border-bottom: none; }
+        .rule-table tr:hover { background: rgba(88, 166, 255, 0.04); }
+        .rule-cat {
+            font-family: var(--mono);
+            font-weight: 600;
+            color: var(--text-bright);
+            white-space: nowrap;
+        }
+        .rule-ids {
+            font-family: var(--mono);
+            font-size: 0.8rem;
+            color: var(--accent);
+            white-space: nowrap;
+        }
+        .rule-desc { color: var(--text-muted); }
+        .rule-table-wrap {
+            background: var(--bg-raised);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        /* ── Feature grid ── */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+        .feature-card {
+            background: var(--bg-raised);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem 1.5rem;
+            transition: border-color 0.15s ease;
+        }
+        .feature-card:hover { border-color: var(--border-hover); }
+        .feature-icon {
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--green);
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+        .feature-name {
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: var(--text-bright);
+            margin-bottom: 0.35rem;
+        }
+        .feature-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.55;
+        }
+
+        /* ── Format badges ── */
+        .format-row {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+        .format-badge {
+            background: var(--bg-raised);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.75rem 1.25rem;
+            text-align: center;
+            flex: 1;
+            min-width: 140px;
+        }
+        .format-ext {
+            font-family: var(--mono);
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 0.2rem;
+        }
+        .format-label {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        /* ── Config section ── */
+        .config-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        /* ── Footer ── */
+        footer {
+            padding: 3rem 0;
+            text-align: center;
+            border-top: 1px solid var(--border);
+        }
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .footer-links a {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .footer-links a:hover { color: var(--accent); }
+        .footer-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: var(--mono);
+        }
+
+        @media (max-width: 640px) {
+            .hero-name { font-size: 2.4rem; }
+            .hero-tagline { font-size: 1.05rem; }
+            .stats { gap: 2rem; }
+            .hero-cta { flex-direction: column; align-items: center; }
+            .btn { width: 100%; max-width: 280px; text-align: center; }
+            .feature-grid { grid-template-columns: 1fr; }
+            .config-grid { grid-template-columns: 1fr; }
+            .format-row { flex-direction: column; }
+            .header-links { gap: 1rem; }
+            .hero-install { font-size: 0.82rem; padding: 0.85rem 1rem; }
+            .hero-install .copy-hint { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="wide-container">
+        <div class="header-inner">
+            <div class="header-logo"><span>&gt;</span> promptlint</div>
+            <nav class="header-links">
+                <a href="https://github.com/scottconverse/promptlint">GitHub</a>
+                <a href="https://github.com/scottconverse/promptlint#quick-start">Docs</a>
+                <a href="https://github.com/scottconverse/promptlint/issues">Issues</a>
+            </nav>
+        </div>
+    </div>
+</header>
+
+<section class="hero">
+    <div class="container">
+        <div class="hero-name">promptlint</div>
+        <p class="hero-tagline">Static analysis for LLM prompts &mdash; treats prompts as code</p>
+        <div class="hero-version">MIT License &middot; Python 3.10+</div>
+        <div class="hero-install" onclick="navigator.clipboard.writeText('pip install promptlint')" title="Click to copy">
+            <span class="prompt">$</span> <span class="cmd">pip install</span> <span class="pkg">promptlint</span>
+            <span class="copy-hint">click to copy</span>
+        </div>
+        <div class="hero-cta">
+            <a href="https://github.com/scottconverse/promptlint" class="btn btn-primary">View on GitHub</a>
+            <a href="https://github.com/scottconverse/promptlint#quick-start" class="btn btn-secondary">Documentation</a>
+        </div>
+    </div>
+</section>
+
+<div class="stats">
+    <div class="stat">
+        <div class="stat-number">34</div>
+        <div class="stat-label">Built-in Rules</div>
+    </div>
+    <div class="stat">
+        <div class="stat-number">10</div>
+        <div class="stat-label">Rule Categories</div>
+    </div>
+    <div class="stat">
+        <div class="stat-number">4</div>
+        <div class="stat-label">File Formats</div>
+    </div>
+    <div class="stat">
+        <div class="stat-number">6</div>
+        <div class="stat-label">Model Profiles</div>
+    </div>
+</div>
+
+<!-- Quick Start -->
+<section class="section">
+    <div class="container">
+        <h2>Quick Start</h2>
+        <p class="section-intro">Install, point at your prompts, get results.</p>
+
+        <div class="code-block"><span class="comment"># Lint a single file</span>
+<span class="prompt">$</span> <span class="cmd">promptlint check</span> <span class="arg">my-prompt.yaml</span>
+
+<span class="comment"># Lint a directory with model-aware thresholds</span>
+<span class="prompt">$</span> <span class="cmd">promptlint check</span> <span class="arg">prompts/</span> <span class="flag">--model</span> <span class="str">claude-3-sonnet</span>
+
+<span class="comment"># Lint a multi-prompt pipeline</span>
+<span class="prompt">$</span> <span class="cmd">promptlint check</span> <span class="arg">prompts/</span> <span class="flag">--pipeline</span>
+
+<span class="comment"># Auto-fix fixable issues</span>
+<span class="prompt">$</span> <span class="cmd">promptlint check</span> <span class="arg">prompts/</span> <span class="flag">--fix</span>
+
+<span class="comment"># List all rules</span>
+<span class="prompt">$</span> <span class="cmd">promptlint rules</span></div>
+    </div>
+</section>
+
+<!-- Rules -->
+<section class="section">
+    <div class="wide-container">
+        <h2>33 Rules Across 9 Categories</h2>
+        <p class="section-intro">Every rule has an ID, a default severity, and a clear description of what it catches.</p>
+        <div class="rule-table-wrap">
+            <table class="rule-table">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>IDs</th>
+                        <th>What It Checks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="rule-cat">Token Budget</td>
+                        <td class="rule-ids">PL001-003</td>
+                        <td class="rule-desc">Token count thresholds, filler content density</td>
+                    </tr>
+                    <tr>
+                        <td class="rule-cat">System Prompt</td>
+                        <td class="rule-ids">PL010-014</td>
+                        <td class="rule-desc">Missing/misplaced system prompt, injection vectors, conflicting instructions</td>
+                    </tr>
+                    <tr>
+                        <td class="rule-cat">Formatting</td>
+                        <td class="rule-ids">PL020-024</td>
+                        <td class="rule-desc">Trailing whitespace, inconsistent delimiters, missing output format, repetition</td>
+                    </tr>
+                    <tr>
+                        <td class="rule-cat">Variables</td>
+                        <td class="rule-ids">PL030-033</td>
+                        <td class="rule-desc">Undefined/unused variables, missing defaults, mixed placeholder formats</td>
+                    </tr>
+                    <tr>
+                        <td class="rule-cat">Pipeline</td>
+                        <td class="rule-ids">PL040-043</td>
+                        <td class="rule-desc">Handoff gaps, context overflow, orphan references, persona drift</td>
+                    </tr>
+                    <tr>
+                        <td class="rule-cat">Hallucination</td>
+                        <td class="rule-ids">PL050-054</td>
+                        <td class="rule-desc">Requests for numbers/URLs/citations without data, no uncertainty instructions</td>
+                    </tr>
+                    <tr>
+                        <td class="rule-cat">Security</td>
+                        <td class="rule-ids">PL060-063</td>
+                        <td class="rule-desc">PII in prompts, API keys, no output constraints, unbounded tool use</td>
+                    </tr>
+                    <tr>
+                        <td class="rule-cat">Smells</td>
+                        <td class="rule-ids">PL070-074</td>
+                        <td class="rule-desc">Ambiguous quantifiers, buried instructions, no examples, wall of text</td>
+                    </tr>
+                    <tr>
+                        <td class="rule-cat">Gates</td>
+                        <td class="rule-ids">PL080-083</td>
+                        <td class="rule-desc">Conditional logic without enforcement, missing fallbacks, no evidence gates</td>
+                    </tr>
+                    <tr>
+                        <td class="rule-cat">Tokenizer</td>
+                        <td class="rule-ids">PL090</td>
+                        <td class="rule-desc">Warns when model profile uses an approximate tokenizer (Claude, Gemini)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- Features -->
+<section class="section">
+    <div class="wide-container">
+        <h2>Features</h2>
+        <p class="section-intro">Not just a linter. A complete prompt quality toolkit.</p>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon">Pipeline</div>
+                <div class="feature-name">Pipeline Analysis</div>
+                <div class="feature-desc">Lint multi-prompt systems as a unit. Catches handoff drift, context window overflow, orphan references, and persona inconsistency across stages.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">Models</div>
+                <div class="feature-name">Model Profiles</div>
+                <div class="feature-desc">Set <code style="color:var(--cyan);">--model claude-3-sonnet</code> to auto-configure context windows and tokenizers. Supports GPT-4, Claude, and Gemini families.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">Plugins</div>
+                <div class="feature-name">Custom Rules</div>
+                <div class="feature-desc">Write rules in Python by extending BaseRule. Drop them in a directory, register in config. Full access to parsed prompt structure.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">Fix</div>
+                <div class="feature-name">Auto-fix</div>
+                <div class="feature-desc">Run with <code style="color:var(--cyan);">--fix</code> to automatically repair fixable violations: trailing whitespace, inconsistent delimiters, missing defaults.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">Watch</div>
+                <div class="feature-name">Watch Mode</div>
+                <div class="feature-desc">Continuously re-lint on file changes during prompt development. Instant feedback loop while you iterate on prompts.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">CI</div>
+                <div class="feature-name">CI Integration</div>
+                <div class="feature-desc">GitHub Actions annotations with <code style="color:var(--cyan);">--format github</code>. JSON output for scripting. Baseline mode to only fail on new violations.</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Supported Formats -->
+<section class="section">
+    <div class="container">
+        <h2>Supported Formats</h2>
+        <p class="section-intro">Parses the prompt formats you already use.</p>
+        <div class="format-row">
+            <div class="format-badge">
+                <div class="format-ext">.txt</div>
+                <div class="format-label">Plain text prompts</div>
+            </div>
+            <div class="format-badge">
+                <div class="format-ext">.md</div>
+                <div class="format-label">Markdown + frontmatter</div>
+            </div>
+            <div class="format-badge">
+                <div class="format-ext">.yaml</div>
+                <div class="format-label">Messages list format</div>
+            </div>
+            <div class="format-badge">
+                <div class="format-ext">.json</div>
+                <div class="format-label">OpenAI chat format</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Configuration -->
+<section class="section">
+    <div class="container">
+        <h2>Configuration</h2>
+        <p class="section-intro">Drop a <code style="color:var(--accent);font-family:var(--mono);">.promptlint.yaml</code> in your project root, or run <code style="color:var(--accent);font-family:var(--mono);">promptlint init</code> to scaffold one.</p>
+        <div class="config-grid">
+            <div>
+                <div class="code-label">.promptlint.yaml</div>
+                <div class="code-block"><span class="key">model</span>: <span class="str">"claude-3-sonnet"</span>
+
+<span class="key">token_budget</span>:
+  <span class="key">warn_threshold</span>: <span class="val">2048</span>
+  <span class="key">error_threshold</span>: <span class="val">4096</span>
+
+<span class="key">rules</span>:
+  <span class="key">PL003</span>: <span class="str">"error"</span>
+  <span class="key">PL022</span>: <span class="str">"ignore"</span>
+
+<span class="key">ignore</span>:
+  - <span class="str">PL020</span>
+  - <span class="str">PL024</span>
+
+<span class="key">exclude</span>:
+  - <span class="str">"tests/**"</span></div>
+            </div>
+            <div>
+                <div class="code-label">CI Integration</div>
+                <div class="code-block"><span class="comment"># .github/workflows/lint-prompts.yml</span>
+- <span class="key">name</span>: <span class="str">Lint prompts</span>
+  <span class="key">run</span>: >
+    <span class="cmd">promptlint check</span> <span class="arg">prompts/</span>
+    <span class="flag">--format</span> <span class="str">github</span>
+    <span class="flag">--min-severity</span> <span class="str">warning</span>
+
+<span class="comment"># Baseline mode: only fail on new violations</span>
+<span class="prompt">$</span> <span class="cmd">promptlint check</span> <span class="arg">prompts/</span>
+  <span class="flag">--baseline</span> <span class="str">prev.json</span>
+  <span class="flag">--format</span> <span class="str">json</span> > <span class="arg">report.json</span></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Output Formats -->
+<section class="section">
+    <div class="container">
+        <h2>Output Formats</h2>
+        <p class="section-intro">Human-readable by default. Machine-readable when you need it.</p>
+        <div class="code-block"><span class="comment"># Human-readable (default)</span>
+<span class="prompt">$</span> <span class="cmd">promptlint check</span> <span class="arg">prompts/</span>
+
+<span class="comment"># JSON for scripting</span>
+<span class="prompt">$</span> <span class="cmd">promptlint check</span> <span class="arg">prompts/</span> <span class="flag">--format</span> <span class="str">json</span>
+
+<span class="comment"># GitHub Actions annotations</span>
+<span class="prompt">$</span> <span class="cmd">promptlint check</span> <span class="arg">prompts/</span> <span class="flag">--format</span> <span class="str">github</span></div>
+
+        <div class="code-label" style="margin-top: 1.5rem;">Exit Codes</div>
+        <div class="code-block"><span class="val">0</span>  No violations (or all below <span class="flag">--min-severity</span>)
+<span class="orange" style="color:var(--orange);">1</span>  Violations found
+<span class="red" style="color:var(--red);">2</span>  Tool error (bad config, parse failure)</div>
+    </div>
+</section>
+
+<!-- Links -->
+<footer>
+    <div class="container">
+        <div class="footer-links">
+            <a href="https://github.com/scottconverse/promptlint">GitHub Repository</a>
+            <a href="https://github.com/scottconverse/promptlint/issues">Report an Issue</a>
+            <a href="https://github.com/scottconverse">More Projects</a>
+        </div>
+        <p class="footer-meta">MIT License &middot; Built by Scott Converse &middot; <a href="terms.html" style="color:var(--text-muted);">Terms &amp; Legal</a></p>
+    </div>
+</footer>
+
+</body>
+</html>

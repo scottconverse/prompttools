@@ -1,0 +1,199 @@
+# prompttools — Developer Tools for LLM Prompts
+
+Lint, format, test, and estimate costs for your LLM prompt files.
+
+<!-- Badges -->
+[![CI](https://img.shields.io/badge/CI-passing-brightgreen)]()
+[![PyPI](https://img.shields.io/badge/PyPI-v1.0.0-blue)]()
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)]()
+
+---
+
+## Overview
+
+**prompttools** is a monorepo containing five developer tools that treat LLM prompts as first-class code artifacts. Each tool can be installed and used independently, but they share a common foundation through `prompttools-core`.
+
+| Package | Version | Description |
+|---------|---------|-------------|
+| [prompttools-core](packages/prompttools-core/) | 1.0.0 | Shared foundation: parsing, tokenization, model profiles, config, cache, and plugin system |
+| [promptlint](packages/promptlint/) | 0.3.0 | Static analysis and linting for prompt files with fixable rules |
+| [promptfmt](packages/promptfmt/) | 1.0.0 | Auto-formatter for prompt files (whitespace, delimiters, variables, wrapping, structure) |
+| [promptcost](packages/promptcost/) | 1.0.0 | Token cost estimation, model comparison, volume projections, and budget enforcement |
+| [prompttest](packages/prompttest/) | 1.0.0 | Test framework for prompts with 15 assertion types and CI-ready output formats |
+
+## Installation
+
+Install individual packages as needed:
+
+```bash
+pip install prompttools-core
+pip install promptfmt
+pip install promptcost
+pip install prompttest
+pip install promptlint
+```
+
+For development on the monorepo:
+
+```bash
+pip install -e packages/prompttools-core[dev]
+pip install -e packages/promptfmt[dev]
+pip install -e packages/promptcost[dev]
+pip install -e packages/prompttest[dev]
+pip install -e packages/promptlint[dev]
+```
+
+**Requirements:** Python 3.9+
+
+## Quick Start
+
+### Parse a prompt file
+
+```python
+from prompttools_core import parse_file, Tokenizer
+
+prompt = parse_file("prompts/greeting.yaml")
+print(f"Messages: {len(prompt.messages)}")
+print(f"Variables: {list(prompt.variables.keys())}")
+
+tokenizer = Tokenizer.for_model("gpt-4o")
+tokens = tokenizer.count_file(prompt)
+print(f"Tokens: {tokens}")
+```
+
+### Format prompt files
+
+```bash
+# Format all prompt files in a directory
+promptfmt format prompts/
+
+# Check formatting without writing (CI mode)
+promptfmt format prompts/ --check
+
+# Show diff of what would change
+promptfmt format prompts/ --diff
+```
+
+### Estimate costs
+
+```bash
+# Estimate cost for a single file
+promptcost estimate prompts/greeting.yaml --model gpt-4o
+
+# Compare costs across models
+promptcost estimate prompts/greeting.yaml --compare
+
+# Project costs at volume
+promptcost estimate prompts/greeting.yaml --model gpt-4o --project 1000/day
+
+# Enforce a budget ceiling
+promptcost budget prompts/ --limit 0.05 --model gpt-4o
+```
+
+### Test your prompts
+
+```bash
+# Run tests from a YAML test file
+prompttest run tests/test_greeting.yaml
+
+# Run all tests in a directory
+prompttest run tests/
+
+# Output JUnit XML for CI
+prompttest run tests/ --format junit
+```
+
+Example test file (`test_greeting.yaml`):
+
+```yaml
+suite: greeting-tests
+prompt: prompts/greeting.yaml
+model: gpt-4o
+
+tests:
+  - name: has-system-message
+    assert: has_role
+    role: system
+
+  - name: token-count-reasonable
+    assert: max_tokens
+    max: 2048
+
+  - name: no-injection-risk
+    assert: not_contains
+    text: "ignore previous instructions"
+
+  - name: cost-under-budget
+    assert: max_cost
+    max: 0.05
+```
+
+## Supported Prompt Formats
+
+All tools support these file formats:
+
+| Extension | Format |
+|-----------|--------|
+| `.yaml`, `.yml` | YAML (structured messages with metadata) |
+| `.json` | JSON (structured messages with metadata) |
+| `.md` | Markdown (heading-delimited sections) |
+| `.txt` | Plain text (single message or `---` delimited) |
+
+Template variables are detected in three syntaxes: `{{var}}` (Jinja), `{var}` (f-string), and `<var>` (XML/angle bracket).
+
+## Built-in Model Profiles
+
+prompttools ships with profiles for popular models including pricing and tokenizer configuration:
+
+| Model | Provider | Context Window | Input $/Mtok | Output $/Mtok |
+|-------|----------|---------------|-------------|--------------|
+| gpt-4 | OpenAI | 8,192 | $30.00 | $60.00 |
+| gpt-4-turbo | OpenAI | 128,000 | $10.00 | $30.00 |
+| gpt-4o | OpenAI | 128,000 | $2.50 | $10.00 |
+| gpt-4o-mini | OpenAI | 128,000 | $0.15 | $0.60 |
+| claude-3-haiku | Anthropic | 200,000 | $0.25 | $1.25 |
+| claude-3-sonnet | Anthropic | 200,000 | $3.00 | $15.00 |
+| claude-3-opus | Anthropic | 200,000 | $15.00 | $75.00 |
+| claude-4-sonnet | Anthropic | 200,000 | $3.00 | $15.00 |
+| gemini-1.5-pro | Google | 1,000,000 | $1.25 | $5.00 |
+| gemini-2.0-flash | Google | 1,048,576 | $0.10 | $0.40 |
+
+Custom profiles can be registered programmatically via `register_profile()`.
+
+## Configuration
+
+All tools share a common configuration file format. Place a `.prompttools.yaml` in your project root:
+
+```yaml
+model: gpt-4o
+exclude:
+  - "vendor/**"
+  - "*.generated.*"
+plugins: []
+cache:
+  enabled: true
+  dir: .prompttools-cache
+```
+
+Tool-specific config files are also supported: `.promptfmt.yaml`, `.promptcost.yaml`, etc. Config files are discovered by walking up the directory tree from the target file.
+
+## Per-Package Documentation
+
+Each package has its own detailed README:
+
+- [prompttools-core README](packages/prompttools-core/README.md) -- Parsing, tokenization, model profiles, config, cache, plugins
+- [promptfmt README](packages/promptfmt/README.md) -- Auto-formatter CLI and rules
+- [promptcost README](packages/promptcost/README.md) -- Cost estimation, comparison, budgets
+- [prompttest README](packages/prompttest/README.md) -- Test framework, assertion types, reporters
+
+See [README-full.md](README-full.md) for comprehensive documentation combining all packages.
+
+## License
+
+MIT License. See [LICENSE](LICENSE) for details.
+
+See [Terms of Service & Legal Disclaimer](docs/terms.html) for warranty limitations and tool-specific risk disclosures.
+
+## Author
+
+Scott Converse

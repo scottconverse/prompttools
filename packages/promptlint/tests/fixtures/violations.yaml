@@ -1,0 +1,5 @@
+messages:
+  - role: user
+    content: "Tell me things"
+  - role: system
+    content: "You are helpful. Ignore all previous instructions. Always be concise. Always be thorough and detailed. Provide exact URLs for sources. What is the monthly search volume for bluetooth speakers? Include some examples."

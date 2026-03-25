@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>prompttools — Terms of Service &amp; Legal</title>
+  <style>
+    :root { --blue: #2563eb; --slate-800: #1e293b; --slate-600: #475569; --slate-100: #f1f5f9; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: var(--slate-800); line-height: 1.7; background: #fff; }
+    .container { max-width: 800px; margin: 0 auto; padding: 40px 24px 80px; }
+    h1 { font-size: 2rem; margin-bottom: 8px; }
+    h2 { font-size: 1.4rem; margin-top: 40px; margin-bottom: 12px; color: var(--blue); }
+    h3 { font-size: 1.1rem; margin-top: 24px; margin-bottom: 8px; }
+    p, li { color: var(--slate-600); margin-bottom: 12px; }
+    ul { padding-left: 24px; }
+    li { margin-bottom: 8px; }
+    .meta { color: var(--slate-600); font-size: 14px; margin-bottom: 32px; }
+    .back { display: inline-block; margin-bottom: 24px; color: var(--blue); text-decoration: none; font-size: 14px; }
+    .back:hover { text-decoration: underline; }
+    .callout { background: var(--slate-100); border-left: 4px solid var(--blue); padding: 16px 20px; border-radius: 0 8px 8px 0; margin: 20px 0; }
+    .callout p { margin-bottom: 0; }
+    strong { color: var(--slate-800); }
+    a { color: var(--blue); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="index.html" class="back">&larr; Back to prompttools</a>
+    <h1>Terms of Service &amp; Legal Disclaimer</h1>
+    <p class="meta">prompttools suite &mdash; Last updated March 2026</p>
+
+    <h2>1. Acceptance of Terms</h2>
+    <p>By downloading, installing, or using any tool in the prompttools suite ("the Software"), including promptlint, promptfmt, prompttest, promptcost, and prompttools-core, you agree to these Terms of Service. If you do not agree, do not use the Software.</p>
+
+    <h2>2. What prompttools Is</h2>
+    <p>prompttools is a suite of free, open-source developer tools for managing LLM prompt files:</p>
+    <ul>
+      <li><strong>promptlint</strong> &mdash; Static analysis tool that checks prompts for token bloat, security vulnerabilities, hallucination risk, structural problems, variable issues, and pipeline integrity.</li>
+      <li><strong>promptfmt</strong> &mdash; Auto-formatter that normalizes whitespace, delimiters, variable syntax, line wrapping, and YAML/JSON structure in prompt files.</li>
+      <li><strong>prompttest</strong> &mdash; Test framework that runs YAML-defined assertions against prompt files (content checks, token limits, cost budgets, format validation).</li>
+      <li><strong>promptcost</strong> &mdash; Cost estimator that calculates token costs across models, projects volume-based spending, and enforces budget limits.</li>
+      <li><strong>prompttools-core</strong> &mdash; Shared foundation library providing prompt parsing, tokenization, model profiles, configuration, and caching.</li>
+    </ul>
+    <p>These are development tools &mdash; they do not execute prompts, connect to AI services, or send data to external servers. promptfmt and promptlint's <code>--fix</code> flag modify files only when explicitly requested.</p>
+
+    <h2>3. License</h2>
+    <p>All tools in the prompttools suite are released under the <strong>MIT License</strong>.</p>
+    <div class="callout">
+      <p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+    </div>
+
+    <h2>4. No Warranty</h2>
+    <p>The prompttools suite is provided without any warranty. The authors make no guarantees that:</p>
+    <ul>
+      <li>promptlint will detect all issues, vulnerabilities, or problems in your prompts</li>
+      <li>Prompts that pass all lint rules are secure, correct, or free of vulnerabilities</li>
+      <li>Security rules (PII detection, API key detection, injection detection) will catch all instances</li>
+      <li>promptfmt will preserve the semantic meaning of prompts during formatting</li>
+      <li>prompttest assertions are sufficient to validate prompt correctness</li>
+      <li>promptcost estimates accurately reflect actual API costs (pricing changes frequently)</li>
+      <li>Token counts or model-specific thresholds are precisely accurate</li>
+      <li>Pipeline analysis will identify all cross-prompt issues</li>
+      <li>The <code>--fix</code> flag will produce correct or safe modifications</li>
+      <li>Custom rules or plugins will function correctly</li>
+    </ul>
+
+    <h2>5. Tool-Specific Risks</h2>
+
+    <h3>5.1 Lint Results Are Advisory</h3>
+    <p>promptlint identifies potential issues based on pattern matching and heuristic analysis. It does not understand the semantic intent of your prompts. A clean lint pass does not mean your prompts are safe, effective, or free of problems. Conversely, lint warnings may flag patterns that are intentional and correct in your context.</p>
+
+    <h3>5.2 Security Analysis Limitations</h3>
+    <p>The security rules (PL060-063) detect common patterns for PII, API keys, and injection vectors. They are not a comprehensive security audit. Prompts that pass security linting may still contain sensitive information, be vulnerable to injection attacks, or have other security issues that pattern-based analysis cannot detect.</p>
+
+    <h3>5.3 Formatting Risk</h3>
+    <p>promptfmt modifies prompt files to normalize formatting. While it includes semantic equivalence checking, automated file modification carries risk. Always review changes and use version control.</p>
+
+    <h3>5.4 Cost Estimation Limitations</h3>
+    <p>promptcost estimates are based on published model pricing and heuristic output token estimation. Actual API costs may differ due to pricing changes, actual output length variation, and tokenizer approximations. Cost estimates should not be used as the sole basis for financial decisions.</p>
+
+    <h3>5.5 Test Framework Limitations</h3>
+    <p>prompttest validates prompts against user-defined assertions. Passing all tests does not guarantee prompt correctness, safety, or fitness for purpose. Test coverage is only as good as the assertions you write.</p>
+
+    <h3>5.6 Auto-Fix Risk</h3>
+    <p>The <code>--fix</code> flag in promptlint automatically modifies prompt files. While fixes target specific, well-defined issues (trailing whitespace, formatting), any automated file modification carries risk. Always review changes after using <code>--fix</code> and use version control.</p>
+
+    <h2>6. Limitation of Liability</h2>
+    <p>To the maximum extent permitted by applicable law, the authors and contributors shall not be liable for any:</p>
+    <ul>
+      <li>Direct, indirect, incidental, special, consequential, or punitive damages</li>
+      <li>Security breaches or vulnerabilities in prompts that passed lint checks</li>
+      <li>Data loss resulting from the <code>--fix</code> flag, formatting, or plugin execution</li>
+      <li>Financial losses arising from inaccurate cost estimates</li>
+      <li>Costs or damages arising from reliance on lint, test, or analysis results</li>
+      <li>Issues caused by custom rules or third-party plugins</li>
+    </ul>
+    <p>This limitation applies regardless of the theory of liability.</p>
+
+    <h2>7. Indemnification</h2>
+    <p>You agree to indemnify, defend, and hold harmless the authors and contributors from any claims, damages, losses, liabilities, costs, and expenses (including reasonable attorney fees) arising from your use of the Software.</p>
+
+    <h2>8. No Professional Advice</h2>
+    <p>The prompttools suite does not provide security consulting, code review, financial advice, or professional advice of any kind. These are developer tools that apply automated pattern matching and analysis to text files. For security-critical applications, consult qualified security professionals. For financial decisions, consult qualified financial advisors.</p>
+
+    <h2>9. Age Requirement</h2>
+    <p>The prompttools suite is intended for users aged 18 and older.</p>
+
+    <h2>10. Governing Law</h2>
+    <p>These terms are governed by the laws of the State of Colorado, United States, without regard to conflict of law principles. Any disputes shall be resolved in the courts of Colorado.</p>
+
+    <h2>11. Contact</h2>
+    <ul>
+      <li>GitHub Issues: <a href="https://github.com/yourusername/prompttools/issues">github.com/yourusername/prompttools/issues</a></li>
+    </ul>
+
+    <p style="margin-top:48px;color:#94a3b8;font-size:13px;">&copy; 2026 Scott Converse. The prompttools suite is released under the MIT License.</p>
+  </div>
+</body>
+</html>

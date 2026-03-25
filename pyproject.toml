@@ -1,0 +1,24 @@
+[project]
+name = "prompttools-monorepo"
+version = "0.0.0"
+description = "Monorepo for the prompttools suite"
+requires-python = ">=3.9"
+
+[tool.pytest.ini_options]
+testpaths = [
+    "packages/prompttools-core/tests",
+    "packages/promptcost/tests",
+    "packages/promptfmt/tests",
+    "packages/prompttest/tests",
+    "packages/promptlint/tests",
+]
+addopts = "-v --tb=short --import-mode=importlib"
+
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true

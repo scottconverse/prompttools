@@ -1,0 +1,17 @@
+suite: e2e-test 
+prompt: sample.yaml 
+tests: 
+  - name: has-system 
+    assert: has_role 
+    role: system 
+  - name: has-user 
+    assert: has_role 
+    role: user 
+  - name: has-variables 
+    assert: has_variables 
+    variables: [user_name, service] 
+  - name: token-limit 
+    assert: max_tokens 
+    max: 2048 
+  - name: valid 
+    assert: valid_format 

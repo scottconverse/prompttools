@@ -1,0 +1,5 @@
+messages:
+  - role: system
+    content: "You are a data processing assistant."
+  - role: user
+    content: "Process this customer record: John Smith, email john.smith@example.com, SSN 123-45-6789, phone 555-867-5309, credit card 4111-1111-1111-1111, API key sk-proj-abc123def456ghi789jkl012mno345pqr678stu901vwx234"

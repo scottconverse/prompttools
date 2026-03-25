@@ -1,0 +1,12 @@
+name: research-report-pipeline
+stages:
+  - name: research
+    file: stage-1.yaml
+    persona: researcher
+    expected_output_tokens: 500
+  - name: editing
+    file: stage-2.yaml
+    depends_on:
+      - research
+    persona: editor
+    expected_output_tokens: 800

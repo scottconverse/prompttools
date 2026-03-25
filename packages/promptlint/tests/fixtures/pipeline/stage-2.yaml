@@ -1,0 +1,7 @@
+messages:
+  - role: system
+    content: "You are an editor. Take the research summary and produce a polished report with an executive summary, key findings, and recommendations."
+  - role: user
+    content: "Edit and polish the following research: {{research_output}}"
+variables:
+  research_output: "Placeholder for stage 1 output"

@@ -1,0 +1,8 @@
+messages:
+  - role: system
+    content: "You are a {{role}} assistant. Answer in {language} format."
+  - role: user
+    content: "Process the following data: {{input_data}}"
+variables:
+  role: "helpful"
+  unused_var: "this variable is never referenced"

@@ -1,0 +1,9 @@
+suite: fail-test 
+prompt: sample.yaml 
+tests: 
+  - name: no-assistant 
+    assert: has_role 
+    role: assistant 
+  - name: contains-missing-text 
+    assert: contains 
+    text: this text does not exist 
