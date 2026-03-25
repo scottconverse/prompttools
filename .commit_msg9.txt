@@ -1,0 +1,8 @@
+Sharpen positioning: Git-native CI tooling for prompt engineering
+
+Updated landing page and README with tighter category positioning,
+correct CLI commands (was showing npx instead of Python CLIs),
+added Who It's For section targeting AI product teams, OSS maintainers,
+platform engineers, and startups.
+
+Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>

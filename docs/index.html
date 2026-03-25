@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>prompttools - Developer Tools for LLM Prompts</title>
+<title>prompttools — Git-native CI tooling for prompt engineering</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -82,8 +82,8 @@
 <!-- Hero -->
 <header class="hero">
   <h1><span class="accent">prompt</span>tools</h1>
-  <p class="tagline">Developer Tools for LLM Prompts</p>
-  <p class="subtitle">Lint, format, test, diff, version, and estimate costs for your prompt files.</p>
+  <p class="tagline">Git-native CI tooling for prompt engineering.</p>
+  <p class="subtitle">The repo-native prompt DevEx layer for AI product teams, OSS maintainers, and startups that keep prompts in version control.</p>
   <a href="#quickstart" class="cta">Get Started</a>
 </header>
 
@@ -144,7 +144,7 @@
 <section id="quickstart">
   <div class="container">
     <h2 class="section-title">Quick Start</h2>
-    <p class="section-desc">Install from npm and start using each tool right away.</p>
+    <p class="section-desc">Install from PyPI and start using each tool right away.</p>
 
     <div class="qs-group">
       <h3>Install</h3>
@@ -154,37 +154,37 @@
     <div class="qs-group">
       <h3>promptlint</h3>
       <pre><code><span class="cmt"># Lint all prompt files in a directory</span>
-<span class="cmd">npx</span> <span class="str">promptlint</span> <span class="flag">./prompts/</span>
+<span class="cmd">promptlint</span> <span class="str">check</span> <span class="flag">./prompts/</span>
 
 <span class="cmt"># Auto-fix issues</span>
-<span class="cmd">npx</span> <span class="str">promptlint</span> <span class="flag">--fix</span> <span class="flag">./prompts/</span></code></pre>
+<span class="cmd">promptlint</span> <span class="str">check</span> <span class="flag">--fix</span> <span class="flag">./prompts/</span></code></pre>
     </div>
 
     <div class="qs-group">
       <h3>promptfmt</h3>
       <pre><code><span class="cmt"># Format prompt files</span>
-<span class="cmd">npx</span> <span class="str">promptfmt</span> <span class="flag">./prompts/</span>
+<span class="cmd">promptfmt</span> <span class="str">format</span> <span class="flag">./prompts/</span>
 
-<span class="cmt"># Watch for changes</span>
-<span class="cmd">npx</span> <span class="str">promptfmt</span> <span class="flag">--watch</span> <span class="flag">./prompts/</span></code></pre>
+<span class="cmt"># Check without modifying</span>
+<span class="cmd">promptfmt</span> <span class="str">format</span> <span class="flag">--check</span> <span class="flag">./prompts/</span></code></pre>
     </div>
 
     <div class="qs-group">
       <h3>prompttest</h3>
       <pre><code><span class="cmt"># Run tests</span>
-<span class="cmd">npx</span> <span class="str">prompttest</span> <span class="flag">./prompts/</span>
+<span class="cmd">prompttest</span> <span class="str">run</span> <span class="flag">tests/</span>
 
 <span class="cmt"># Output JUnit XML for CI</span>
-<span class="cmd">npx</span> <span class="str">prompttest</span> <span class="flag">--reporter junit</span> <span class="flag">--output results.xml</span></code></pre>
+<span class="cmd">prompttest</span> <span class="str">run</span> <span class="flag">tests/</span> <span class="flag">--format junit</span></code></pre>
     </div>
 
     <div class="qs-group">
       <h3>promptcost</h3>
       <pre><code><span class="cmt"># Estimate costs across models</span>
-<span class="cmd">npx</span> <span class="str">promptcost</span> <span class="flag">./prompts/</span>
+<span class="cmd">promptcost</span> <span class="str">estimate</span> <span class="flag">prompt.yaml</span> <span class="flag">--compare</span>
 
 <span class="cmt"># Enforce a budget ceiling in CI</span>
-<span class="cmd">npx</span> <span class="str">promptcost</span> <span class="flag">--max-cost 5.00</span> <span class="flag">./prompts/</span></code></pre>
+<span class="cmd">promptcost</span> <span class="str">budget</span> <span class="flag">prompt.yaml</span> <span class="flag">--limit 0.05</span></code></pre>
     </div>
 
     <div class="qs-group">
@@ -208,31 +208,61 @@
   </div>
 </section>
 
+<!-- Who It's For -->
+<section id="who">
+  <div class="container">
+    <h2 class="section-title">Who It's For</h2>
+    <p class="section-desc">Teams that treat prompts as code and want guardrails before investing in a hosted platform.</p>
+    <div class="feat-grid">
+      <div class="feat">
+        <span class="feat-icon">&#127981;</span>
+        <h4>AI Product Teams</h4>
+        <p>Ship prompts with the same rigor as application code. Lint in PRs, test in CI, track costs before they surprise you.</p>
+      </div>
+      <div class="feat">
+        <span class="feat-icon">&#128187;</span>
+        <h4>OSS Maintainers</h4>
+        <p>Version your prompts, detect breaking changes in diffs, and give contributors clear quality gates.</p>
+      </div>
+      <div class="feat">
+        <span class="feat-icon">&#9881;</span>
+        <h4>Platform Engineers</h4>
+        <p>Enforce org-wide prompt standards with shared lint rules, cost budgets, and a local prompt registry.</p>
+      </div>
+      <div class="feat">
+        <span class="feat-icon">&#128640;</span>
+        <h4>Startups</h4>
+        <p>Skip the hosted prompt platform. Get lint, format, test, diff, and versioning from pip install &mdash; free, local, Git-native.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- Features -->
 <section id="features">
   <div class="container">
-    <h2 class="section-title">Features</h2>
-    <p class="section-desc">Built for real prompt engineering workflows.</p>
+    <h2 class="section-title">Why prompttools</h2>
+    <p class="section-desc">Local-first. Git-first. CI-first. No hosted platform required.</p>
     <div class="feat-grid">
       <div class="feat">
         <span class="feat-icon">&#9881;</span>
-        <h4>CI/CD Ready</h4>
-        <p>Exit codes, JUnit XML output, and JSON reporters make it easy to integrate into any pipeline.</p>
+        <h4>CI/CD Native</h4>
+        <p>Exit codes, JUnit XML, JSON reporters, and breaking-change gates. Plug into GitHub Actions, GitLab CI, or any pipeline.</p>
       </div>
       <div class="feat">
         <span class="feat-icon">&#128202;</span>
         <h4>10+ Model Profiles</h4>
-        <p>Built-in pricing and token limits for models from OpenAI, Anthropic, Google, and more.</p>
+        <p>Built-in pricing and token limits for GPT-4, Claude, Gemini, and more. Compare costs across models in one command.</p>
       </div>
       <div class="feat">
         <span class="feat-icon">&#128268;</span>
         <h4>Plugin System</h4>
-        <p>Extend linting rules, formatters, and cost profiles with your own plugins.</p>
+        <p>Extend lint rules, formatters, and cost profiles with your own Python plugins.</p>
       </div>
       <div class="feat">
         <span class="feat-icon">&#128196;</span>
-        <h4>Multi-Format Support</h4>
-        <p>Works with YAML, JSON, Markdown, and plain text prompt files out of the box.</p>
+        <h4>Multi-Format</h4>
+        <p>YAML, JSON, Markdown, and plain text prompts. Parse once, lint/format/test/diff across all of them.</p>
       </div>
     </div>
   </div>

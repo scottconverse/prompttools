@@ -1,6 +1,6 @@
-# prompttools — Developer Tools for LLM Prompts
+# prompttools — Git-native CI tooling for prompt engineering
 
-Lint, format, test, and estimate costs for your LLM prompt files.
+The repo-native prompt DevEx layer for AI product teams, OSS maintainers, and startups that keep prompts in version control.
 
 <!-- Badges -->
 [![CI](https://img.shields.io/badge/CI-passing-brightgreen)]()
@@ -11,7 +11,9 @@ Lint, format, test, and estimate costs for your LLM prompt files.
 
 ## Overview
 
-**prompttools** is a monorepo containing seven developer tools that treat LLM prompts as first-class code artifacts. Each tool can be installed and used independently, but they share a common foundation through `prompttools-core`.
+**prompttools** is a suite of seven open-source tools that treat LLM prompts as first-class code artifacts. Lint, format, test, diff, version, and estimate costs — all local-first, Git-native, and CI-ready. No hosted platform required.
+
+Each tool installs independently via pip, but they share a common foundation through `prompttools-core`.
 
 | Package | Version | Description |
 |---------|---------|-------------|
