@@ -13,10 +13,10 @@ Last updated: 2026-03-24 (end of session)
 | promptfmt-ai | 1.0.0 | 48 pass | ✅ `format`, `--check`, `--diff` verified | ✅ Ready |
 | promptcost-ai | 1.0.0 | 47 pass | ✅ `estimate`, `--compare`, `budget`, `models` verified | ✅ Ready |
 | prompttest-ai | 1.0.0 | 137 pass | ✅ `run` (text/json/junit), `init`, fail cases verified | ✅ Ready |
-| promptdiff-ai | 1.0.0 | — | — | ✅ Ready |
+| promptdiff-ai | 1.0.0 | 116 pass | ✅ `promptdiff` (text/json/markdown), `--exit-on-breaking` verified | ✅ Ready |
 | promptvault-ai | 1.0.0 | — | — | ✅ Ready |
 | Integration | — | 10 pass | — | ✅ Ready |
-| **TOTAL** | — | **518 pass** | **All CLIs verified** | ✅ |
+| **TOTAL** | — | **634 pass** | **All CLIs verified** | ✅ |
 
 ### Infrastructure
 - .gitignore: ✅ Created

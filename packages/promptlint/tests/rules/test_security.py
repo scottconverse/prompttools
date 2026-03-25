@@ -66,6 +66,24 @@ class TestPL061HardcodedAPIKey:
         violations = HardcodedAPIKeyRule().check(pf, LintConfig())
         assert any(v.rule_id == "PL061" for v in violations)
 
+    def test_fires_on_anthropic_key_realistic(self) -> None:
+        """PL061 should flag sk-ant- prefixed Anthropic API keys."""
+        pf = _make_pf(
+            "Use this key: sk-ant-api03-fakekeyvalue1234567890abcdef"
+        )
+        violations = HardcodedAPIKeyRule().check(pf, LintConfig())
+        assert any(v.rule_id == "PL061" for v in violations)
+        assert any("Anthropic" in v.message for v in violations)
+
+    def test_no_false_positive_on_short_sk(self) -> None:
+        """PL061 should not flag short 'sk-' strings that are not API keys."""
+        pf = _make_pf("The skill abbreviation is sk-101 in the catalog.")
+        violations = HardcodedAPIKeyRule().check(pf, LintConfig())
+        # sk-101 is too short to match any key pattern
+        assert not any(
+            v.rule_id == "PL061" and "OpenAI" in v.message for v in violations
+        )
+
     def test_fires_on_groq_key(self) -> None:
         pf = _make_pf("Set GROQ_API_KEY=gsk_abcdefghijklmnopqrstuvwx for inference.")
         violations = HardcodedAPIKeyRule().check(pf, LintConfig())

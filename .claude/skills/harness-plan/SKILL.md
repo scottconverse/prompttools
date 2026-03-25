@@ -93,3 +93,5 @@ Present the sprint contract summary to the user. Ask if the scope, deliverables,
 4. **Reference existing patterns.** If the codebase already has a convention (e.g., Typer for CLI, Pydantic for models), state it as a constraint.
 5. **Don't over-decompose.** A sprint should be completable in one session. If the PRD is too big, propose multiple sprints and build the first one.
 6. **Number sprints sequentially.** Check `.claude/sprints/` for existing sprint files and use the next number.
+7. **Release sprints MUST include documentation and publishing.** When a sprint produces shippable code, the deliverables MUST include: README updates (test counts, new features, fixes), landing page updates, PDF regeneration if applicable, and PyPI publishing. Code without updated docs is not shippable.
+8. **Docs deliverables are testable.** Acceptance criteria for docs include: "README reflects current test count", "Landing page mentions all 7 packages", "Install commands use correct -ai package names", "No placeholder URLs remain".

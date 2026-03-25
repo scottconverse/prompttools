@@ -1,0 +1,7 @@
+Update docs, planner skill, and memory for sprint 001 results
+
+Added release sprint constraint to harness-plan skill.
+Updated MEMORY.md with promptdiff test count (116) and total (634).
+All docs verified accurate - no other changes needed.
+
+Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
