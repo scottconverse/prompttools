@@ -286,6 +286,89 @@
   </div>
 </section>
 
+<!-- How It Compares -->
+<section id="compares">
+  <div class="container">
+    <h2 class="section-title">How It Compares</h2>
+    <p class="section-desc">prompttools is the toolchain, not the platform.</p>
+    <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+      <table style="width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; min-width: 640px;">
+        <thead>
+          <tr>
+            <th style="text-align: left; padding: 14px 16px; border-bottom: 2px solid var(--border); color: var(--muted); font-size: .85rem; font-weight: 600; text-transform: uppercase; letter-spacing: .5px;">Capability</th>
+            <th style="text-align: center; padding: 14px 16px; border-bottom: 2px solid var(--border); color: var(--muted); font-size: .85rem; font-weight: 600;">Hosted Platforms<br><span style="font-weight: 400; font-size: .75rem;">(Maxim, Braintrust, Humanloop)</span></th>
+            <th style="text-align: center; padding: 14px 16px; border-bottom: 2px solid var(--border); color: var(--muted); font-size: .85rem; font-weight: 600;">Promptfoo</th>
+            <th style="text-align: center; padding: 14px 16px; border-bottom: 2px solid var(--border); background: rgba(88,166,255,.08); color: var(--accent); font-size: .85rem; font-weight: 600;">prompttools</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: .9rem;">Static analysis (lint)</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; color: var(--red); font-size: 1rem;">&#10007;</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; color: var(--red); font-size: 1rem;">&#10007;</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; background: rgba(88,166,255,.04); color: var(--green); font-size: .9rem;">&#10003; 34 rules + auto-fix</td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: .9rem;">Auto-formatting</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; color: var(--red); font-size: 1rem;">&#10007;</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; color: var(--red); font-size: 1rem;">&#10007;</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; background: rgba(88,166,255,.04); color: var(--green); font-size: .9rem;">&#10003; 5-rule pipeline</td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: .9rem;">Structural testing (no API call)</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; color: var(--red); font-size: 1rem;">&#10007;</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; color: var(--red); font-size: 1rem;">&#10007;</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; background: rgba(88,166,255,.04); color: var(--green); font-size: .9rem;">&#10003; 15 assertion types</td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: .9rem;">Output testing (with API call)</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; color: var(--green); font-size: 1rem;">&#10003;</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; color: var(--green); font-size: 1rem;">&#10003;</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; background: rgba(88,166,255,.04); color: var(--muted); font-size: .9rem; font-style: italic;">planned</td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: .9rem;">Cost estimation as CI gate</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; color: var(--red); font-size: 1rem;">&#10007;</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; color: var(--red); font-size: 1rem;">&#10007;</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; background: rgba(88,166,255,.04); color: var(--green); font-size: .9rem;">&#10003; budget enforcement</td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: .9rem;">Semantic diff with breaking changes</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; color: var(--muted); font-size: .9rem;">UI only</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; color: var(--red); font-size: 1rem;">&#10007;</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; background: rgba(88,166,255,.04); color: var(--green); font-size: .9rem;">&#10003; CLI + CI gate</td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: .9rem;">Prompt versioning</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; color: var(--green); font-size: .9rem;">&#10003; cloud</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; color: var(--red); font-size: 1rem;">&#10007;</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; background: rgba(88,166,255,.04); color: var(--green); font-size: .9rem;">&#10003; local + lockfiles</td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: .9rem;">Runs locally</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; color: var(--red); font-size: 1rem;">&#10007;</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; color: var(--green); font-size: 1rem;">&#10003;</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; background: rgba(88,166,255,.04); color: var(--green); font-size: 1rem;">&#10003;</td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: .9rem;">No account required</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; color: var(--red); font-size: 1rem;">&#10007;</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; color: var(--green); font-size: 1rem;">&#10003;</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; background: rgba(88,166,255,.04); color: var(--green); font-size: 1rem;">&#10003;</td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: .9rem;">Git-native CI integration</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; color: var(--muted); font-size: .9rem;">partial</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; color: var(--green); font-size: 1rem;">&#10003;</td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: center; background: rgba(88,166,255,.04); color: var(--green); font-size: 1rem;">&#10003;</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="color: var(--muted); font-size: .95rem; margin-top: 24px; max-width: 720px;">prompttools composes with your existing Git workflow and CI pipeline. It doesn't replace your platform &mdash; it makes your prompts ready for one.</p>
+  </div>
+</section>
+
 <!-- Footer -->
 <footer>
   <div class="container">

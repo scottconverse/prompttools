@@ -1,0 +1,6 @@
+Add How It Compares section to landing page
+
+Comparison table: prompttools vs hosted platforms vs Promptfoo.
+Shows the toolchain positioning across 10 capabilities.
+
+Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
