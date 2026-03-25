@@ -61,6 +61,21 @@ class TestPL061HardcodedAPIKey:
         violations = HardcodedAPIKeyRule().check(pf, LintConfig())
         assert any(v.rule_id == "PL061" for v in violations)
 
+    def test_fires_on_anthropic_key(self) -> None:
+        pf = _make_pf("Use this key: sk-ant-api03-xxxxxxxxxxxxxxxxxxxx to authenticate.")
+        violations = HardcodedAPIKeyRule().check(pf, LintConfig())
+        assert any(v.rule_id == "PL061" for v in violations)
+
+    def test_fires_on_groq_key(self) -> None:
+        pf = _make_pf("Set GROQ_API_KEY=gsk_abcdefghijklmnopqrstuvwx for inference.")
+        violations = HardcodedAPIKeyRule().check(pf, LintConfig())
+        assert any(v.rule_id == "PL061" for v in violations)
+
+    def test_fires_on_gitlab_token(self) -> None:
+        pf = _make_pf("Use token glpat-xxxxxxxxxxxxxxxxxxxx for GitLab API access.")
+        violations = HardcodedAPIKeyRule().check(pf, LintConfig())
+        assert any(v.rule_id == "PL061" for v in violations)
+
     def test_clean(self) -> None:
         pf = _make_pf("Use the {{api_key}} variable for authentication.")
         violations = HardcodedAPIKeyRule().check(pf, LintConfig())
