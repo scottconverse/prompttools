@@ -15,8 +15,8 @@ A monorepo containing a suite of developer tools for managing LLM prompt files. 
 | **promptfmt** | Auto-formatter (whitespace, delimiters, variables, wrapping, structure) | `packages/promptfmt/` |
 | **promptcost** | Token cost estimator, model comparison, budget enforcement | `packages/promptcost/` |
 | **prompttest** | Test framework — YAML test files with assertions about prompts | `packages/prompttest/` |
-
-**Deferred to v2:** promptdiff (PRD-3), promptvault (PRD-4)
+| **promptdiff** | Semantic diff for prompt changes — message-level diffs, variable impact, token deltas, breaking change detection | `packages/promptdiff/` |
+| **promptvault** | Version control and registry for prompt assets — semantic versioning, dependency resolution, lockfiles, searchable catalog | `packages/promptvault/` |
 
 ## BUILD & TEST COMMANDS
 
@@ -26,6 +26,8 @@ pip install -e packages/prompttools-core[dev]
 pip install -e packages/promptcost[dev]
 pip install -e packages/promptfmt[dev]
 pip install -e packages/prompttest[dev]
+pip install -e packages/promptdiff[dev]
+pip install -e packages/promptvault[dev]
 
 # Run all tests
 pytest
@@ -35,6 +37,8 @@ pytest packages/prompttools-core/tests/
 pytest packages/promptcost/tests/
 pytest packages/promptfmt/tests/
 pytest packages/prompttest/tests/
+pytest packages/promptdiff/tests/
+pytest packages/promptvault/tests/
 
 # Lint
 ruff check .

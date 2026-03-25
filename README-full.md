@@ -18,17 +18,19 @@ Developer Tools for LLM Prompts: Lint, format, test, and estimate costs for your
 5. [promptfmt Reference](#promptfmt-reference)
 6. [promptcost Reference](#promptcost-reference)
 7. [prompttest Reference](#prompttest-reference)
-8. [Configuration Reference](#configuration-reference)
-9. [CI/CD Integration Guide](#cicd-integration-guide)
-10. [Plugin Development Guide](#plugin-development-guide)
-11. [Troubleshooting](#troubleshooting)
-12. [FAQ](#faq)
+8. [promptdiff Reference](#promptdiff-reference)
+9. [promptvault Reference](#promptvault-reference)
+10. [Configuration Reference](#configuration-reference)
+11. [CI/CD Integration Guide](#cicd-integration-guide)
+12. [Plugin Development Guide](#plugin-development-guide)
+13. [Troubleshooting](#troubleshooting)
+14. [FAQ](#faq)
 
 ---
 
 ## Overview
 
-**prompttools** is a monorepo containing five developer tools that treat LLM prompts as first-class code artifacts. Think eslint/prettier/jest, but for prompts.
+**prompttools** is a monorepo containing seven developer tools that treat LLM prompts as first-class code artifacts. Think eslint/prettier/jest, but for prompts.
 
 | Package | Version | Description |
 |---------|---------|-------------|
@@ -37,6 +39,8 @@ Developer Tools for LLM Prompts: Lint, format, test, and estimate costs for your
 | **promptfmt** | 1.0.0 | Auto-formatter (whitespace, delimiters, variables, wrapping, structure) |
 | **promptcost** | 1.0.0 | Cost estimation, model comparison, volume projections, budget enforcement |
 | **prompttest** | 1.0.0 | Test framework with 15 assertion types and CI-ready output formats |
+| **promptdiff** | 1.0.0 | Semantic diff for prompt changes — message-level diffs, variable impact, token deltas, breaking change detection |
+| **promptvault** | 1.0.0 | Version control and registry for prompt assets — semantic versioning, dependency resolution, lockfiles, searchable catalog |
 
 All tools support four prompt file formats: YAML (`.yaml`/`.yml`), JSON (`.json`), Markdown (`.md`), and plain text (`.txt`).
 
@@ -54,6 +58,8 @@ pip install promptfmt-ai           # auto-formatter
 pip install promptcost-ai          # cost estimator
 pip install prompttest-ai          # test framework
 pip install promptlint-ai          # linter
+pip install promptdiff-ai          # semantic diff
+pip install promptvault-ai         # version control & registry
 ```
 
 Each tool package depends on `prompttools-core-ai` and will install it automatically.
@@ -69,6 +75,8 @@ pip install -e packages/promptfmt[dev]
 pip install -e packages/promptcost[dev]
 pip install -e packages/prompttest[dev]
 pip install -e packages/promptlint[dev]
+pip install -e packages/promptdiff[dev]
+pip install -e packages/promptvault[dev]
 ```
 
 ### Running Tests
@@ -82,6 +90,8 @@ pytest packages/prompttools-core/tests/
 pytest packages/promptfmt/tests/
 pytest packages/promptcost/tests/
 pytest packages/prompttest/tests/
+pytest packages/promptdiff/tests/
+pytest packages/promptvault/tests/
 
 # Linting and type checking
 ruff check .
@@ -702,6 +712,143 @@ files = discover_test_files(Path("tests/"), pattern="test_*.yaml")
 # Formatting
 print(format_text(report))
 junit_xml = format_junit(report)
+```
+
+---
+
+## promptdiff Reference
+
+### CLI Commands
+
+#### `promptdiff <file_a> <file_b>`
+
+Compare two prompt files and show semantic differences.
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `-f, --format` | `text` | Output: `text`, `json`, `markdown` |
+| `--exit-on-breaking` | `false` | Exit with code 1 if breaking changes found |
+| `--token-detail` | `false` | Show per-message token breakdowns |
+| `-e, --encoding` | `cl100k_base` | tiktoken encoding |
+| `-V, --version` | | Show version and exit |
+
+### What It Detects
+
+- **Message-level changes** -- Added, removed, or modified messages with per-message token deltas and unified content diffs
+- **Variable changes** -- New variables (with or without defaults), removed variables, modified default values
+- **Metadata changes** -- Model changes, added/removed/modified metadata keys
+- **Token deltas** -- Total token count comparison, percentage change, per-message breakdowns
+
+### Breaking Change Classification
+
+| Severity | Change | Reason |
+|----------|--------|--------|
+| HIGH | New required variable | Variable added without default; existing callers will fail |
+| HIGH | Removed variable | Callers referencing this variable will break |
+| HIGH | Removed message | Changes the prompt structure |
+| MEDIUM | Model change | May affect behavior, pricing, and capabilities |
+| MEDIUM | Role ordering change | May affect model behavior |
+
+Non-breaking changes include: added variables with defaults, added messages, content modifications, and metadata changes (except model).
+
+### Output Formats
+
+- **Text** -- Rich terminal output with color-coded diffs
+- **JSON** -- Structured JSON for programmatic consumption (`--format json`)
+- **Markdown** -- GitHub-flavored Markdown for PR comments (`--format markdown`)
+
+### Programmatic API
+
+```python
+from promptdiff import diff_files, format_text, format_json
+
+# Compare two files
+result = diff_files("prompts/v1.yaml", "prompts/v2.yaml")
+
+# Check for breaking changes
+if result.is_breaking:
+    for bc in result.breaking_changes:
+        print(f"[{bc.severity}] {bc.description}")
+
+# Get token delta
+print(f"Tokens: {result.token_delta.old_total} -> {result.token_delta.new_total}")
+
+# Format output
+print(format_text(result))
+```
+
+---
+
+## promptvault Reference
+
+### CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `promptvault init` | Scaffold a new `promptvault.yaml` manifest |
+| `promptvault publish` | Publish the current package to the local registry |
+| `promptvault install` | Resolve dependencies and generate a lockfile |
+| `promptvault search <query>` | Search the registry catalog |
+| `promptvault info <package>` | Show package details |
+| `promptvault list` | List all packages in the registry |
+| `promptvault verify` | Verify lockfile integrity |
+
+#### Global Options
+
+- `--registry <path>` -- Override the default registry location (`~/.promptvault/registry/`)
+- `--format text|json` -- Output format (default: `text`)
+
+### Package Manifest
+
+Create a `promptvault.yaml` to define a prompt package:
+
+```yaml
+name: '@my-org/my-prompts'
+version: 0.1.0
+description: A prompt package
+author: Your Name
+license: MIT
+prompts:
+  - file: prompts/greeting.yaml
+    name: greeting
+    description: A friendly greeting prompt
+    variables: [user_name]
+    model: claude-4-sonnet
+dependencies: {}
+quality:
+  lint: optional
+  test: optional
+  format: optional
+```
+
+### Version Ranges
+
+Dependency version ranges follow semver conventions:
+
+| Syntax | Meaning | Example |
+|--------|---------|---------|
+| `^1.2.3` | Compatible with 1.x.x | `>=1.2.3, <2.0.0` |
+| `~1.2.3` | Patch-level changes | `>=1.2.3, <1.3.0` |
+| `>=1.0,<2.0` | PEP 440 range | Explicit range |
+| `1.2.3` | Exact version | `==1.2.3` |
+
+### Programmatic API
+
+```python
+from promptvault import LocalRegistry, PackageManifest, resolve_dependencies
+
+# Create a registry
+registry = LocalRegistry()
+
+# Publish a package
+entry = registry.publish(Path("./my-package"))
+
+# Search
+results = registry.search("greeting")
+
+# Resolve dependencies
+manifest = PackageManifest(...)
+resolved = resolve_dependencies(manifest, registry)
 ```
 
 ---

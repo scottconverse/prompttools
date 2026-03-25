@@ -1,0 +1,6 @@
+Update all docs for v2 packages (promptdiff-ai, promptvault-ai)
+
+Updated README-full, terms, CI config, CLAUDE.md, MEMORY.md,
+pyproject.toml testpaths for complete 7-package suite.
+
+Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>

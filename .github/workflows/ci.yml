@@ -30,6 +30,8 @@ jobs:
           pip install -e packages/promptfmt
           pip install -e packages/prompttest
           pip install -e packages/promptlint
+          pip install -e packages/promptdiff
+          pip install -e packages/promptvault
 
       - name: Lint with ruff
         run: ruff check .

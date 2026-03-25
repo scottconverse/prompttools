@@ -21,18 +21,20 @@ TABLE OF CONTENTS
  5. promptfmt Reference
  6. promptcost Reference
  7. prompttest Reference
- 8. Configuration Reference
- 9. CI/CD Integration Guide
-10. Plugin Development Guide
-11. Troubleshooting
-12. FAQ
+ 8. promptdiff Reference
+ 9. promptvault Reference
+10. Configuration Reference
+11. CI/CD Integration Guide
+12. Plugin Development Guide
+13. Troubleshooting
+14. FAQ
 
 
 ===============================================================================
 1. OVERVIEW
 ===============================================================================
 
-prompttools is a monorepo containing five developer tools that treat LLM
+prompttools is a monorepo containing seven developer tools that treat LLM
 prompts as first-class code artifacts. Think eslint/prettier/jest, but for
 prompts.
 
@@ -48,6 +50,12 @@ prompts.
                                projections, budget enforcement
   prompttest          1.0.0    Test framework with 15 assertion types and
                                CI-ready output formats
+  promptdiff          1.0.0    Semantic diff for prompt changes -- message-level
+                               diffs, variable impact, token deltas, breaking
+                               change detection
+  promptvault         1.0.0    Version control and registry for prompt assets --
+                               semantic versioning, dependency resolution,
+                               lockfiles, searchable catalog
 
 All tools support four prompt file formats:
   * YAML (.yaml / .yml)
@@ -73,6 +81,8 @@ Install Individual Packages
     pip install promptcost-ai
     pip install prompttest-ai
     pip install promptlint-ai
+    pip install promptdiff-ai
+    pip install promptvault-ai
 
 Each tool package depends on prompttools-core-ai and will install it
 automatically.
@@ -88,6 +98,8 @@ Development Installation (Monorepo)
     pip install -e packages/promptcost[dev]
     pip install -e packages/prompttest[dev]
     pip install -e packages/promptlint[dev]
+    pip install -e packages/promptdiff[dev]
+    pip install -e packages/promptvault[dev]
 
 Running Tests
 --------------
@@ -100,6 +112,8 @@ Running Tests
     pytest packages/promptfmt/tests/
     pytest packages/promptcost/tests/
     pytest packages/prompttest/tests/
+    pytest packages/promptdiff/tests/
+    pytest packages/promptvault/tests/
 
     # Lint and type check
     ruff check .
@@ -643,7 +657,137 @@ Programmatic API
 
 
 ===============================================================================
-8. CONFIGURATION REFERENCE
+8. PROMPTDIFF REFERENCE
+===============================================================================
+
+CLI Commands
+-------------
+
+  promptdiff <file_a> <file_b>
+    Compare two prompt files and show semantic differences.
+
+    Options:
+      -f, --format         Output: text, json, markdown (default: text)
+      --exit-on-breaking   Exit with code 1 if breaking changes found
+      --token-detail       Show per-message token breakdowns
+      -e, --encoding       tiktoken encoding (default: cl100k_base)
+      -V, --version        Show version and exit
+
+What It Detects
+----------------
+
+  * Message-level changes -- Added, removed, or modified messages with
+    per-message token deltas and unified content diffs
+  * Variable changes -- New variables (with or without defaults), removed
+    variables, modified default values
+  * Metadata changes -- Model changes, added/removed/modified metadata keys
+  * Token deltas -- Total token count comparison, percentage change,
+    per-message breakdowns
+
+Breaking Change Classification
+--------------------------------
+
+  Severity  Change                  Reason
+  ---       ---                     ---
+  HIGH      New required variable   Added without default; callers will fail
+  HIGH      Removed variable        Callers referencing it will break
+  HIGH      Removed message         Changes the prompt structure
+  MEDIUM    Model change            May affect behavior, pricing, capabilities
+  MEDIUM    Role ordering change    May affect model behavior
+
+  Non-breaking: added variables with defaults, added messages, content
+  modifications, metadata changes (except model).
+
+Output Formats
+---------------
+
+  text      Rich terminal output with color-coded diffs (default)
+  json      Structured JSON for programmatic consumption
+  markdown  GitHub-flavored Markdown for PR comments
+
+Programmatic API
+-----------------
+
+    from promptdiff import diff_files, format_text, format_json
+
+    result = diff_files("prompts/v1.yaml", "prompts/v2.yaml")
+
+    if result.is_breaking:
+        for bc in result.breaking_changes:
+            print(f"[{bc.severity}] {bc.description}")
+
+    print(f"Tokens: {result.token_delta.old_total} -> {result.token_delta.new_total}")
+    print(format_text(result))
+
+
+===============================================================================
+9. PROMPTVAULT REFERENCE
+===============================================================================
+
+CLI Commands
+-------------
+
+  promptvault init               Scaffold a new promptvault.yaml manifest
+  promptvault publish             Publish the current package to the local registry
+  promptvault install             Resolve dependencies and generate a lockfile
+  promptvault search <query>      Search the registry catalog
+  promptvault info <package>      Show package details
+  promptvault list                List all packages in the registry
+  promptvault verify              Verify lockfile integrity
+
+  Global Options:
+    --registry <path>    Override default registry (~/.promptvault/registry/)
+    --format text|json   Output format (default: text)
+
+Package Manifest
+-----------------
+
+Create a promptvault.yaml to define a prompt package:
+
+    name: '@my-org/my-prompts'
+    version: 0.1.0
+    description: A prompt package
+    author: Your Name
+    license: MIT
+    prompts:
+      - file: prompts/greeting.yaml
+        name: greeting
+        description: A friendly greeting prompt
+        variables: [user_name]
+        model: claude-4-sonnet
+    dependencies: {}
+    quality:
+      lint: optional
+      test: optional
+      format: optional
+
+Version Ranges
+---------------
+
+  Syntax       Meaning                   Example
+  ---          ---                       ---
+  ^1.2.3       Compatible with 1.x.x     >=1.2.3, <2.0.0
+  ~1.2.3       Patch-level changes        >=1.2.3, <1.3.0
+  >=1.0,<2.0   PEP 440 range             Explicit range
+  1.2.3        Exact version              ==1.2.3
+
+Programmatic API
+-----------------
+
+    from promptvault import LocalRegistry, PackageManifest, resolve_dependencies
+
+    registry = LocalRegistry()
+
+    entry = registry.publish(Path("./my-package"))
+
+    results = registry.search("greeting")
+
+    manifest = PackageManifest(...)
+    resolved = resolve_dependencies(manifest, registry)
+
+
+===============================================================================
+10. CONFIGURATION REFERENCE
 ===============================================================================
 
 Config File Locations
@@ -697,7 +841,7 @@ Full Config File Reference
 
 
 ===============================================================================
-9. CI/CD INTEGRATION GUIDE
+11. CI/CD INTEGRATION GUIDE
 ===============================================================================
 
 GitHub Actions
@@ -768,7 +912,7 @@ Exit Codes
 
 
 ===============================================================================
-10. PLUGIN DEVELOPMENT GUIDE
+12. PLUGIN DEVELOPMENT GUIDE
 ===============================================================================
 
 The plugin system allows extending prompttools with custom logic. Plugins are
@@ -818,7 +962,7 @@ Plugin Discovery Rules
 
 
 ===============================================================================
-11. TROUBLESHOOTING
+13. TROUBLESHOOTING
 ===============================================================================
 
 "Unsupported file extension" error
@@ -854,7 +998,7 @@ JUnit XML not recognized by CI
 
 
 ===============================================================================
-12. FAQ
+14. FAQ
 ===============================================================================
 
 Q: Can I use prompttools without any LLM API calls?

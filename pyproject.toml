@@ -11,6 +11,8 @@ testpaths = [
     "packages/promptfmt/tests",
     "packages/prompttest/tests",
     "packages/promptlint/tests",
+    "packages/promptdiff/tests",
+    "packages/promptvault/tests",
 ]
 addopts = "-v --tb=short --import-mode=importlib"
 

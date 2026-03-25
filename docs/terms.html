@@ -40,6 +40,8 @@
       <li><strong>promptfmt</strong> &mdash; Auto-formatter that normalizes whitespace, delimiters, variable syntax, line wrapping, and YAML/JSON structure in prompt files.</li>
       <li><strong>prompttest</strong> &mdash; Test framework that runs YAML-defined assertions against prompt files (content checks, token limits, cost budgets, format validation).</li>
       <li><strong>promptcost</strong> &mdash; Cost estimator that calculates token costs across models, projects volume-based spending, and enforces budget limits.</li>
+      <li><strong>promptdiff</strong> &mdash; Semantic diff tool that compares prompt files and detects message-level changes, variable impact, token deltas, and breaking changes for CI/CD gating.</li>
+      <li><strong>promptvault</strong> &mdash; Version control and registry for prompt assets with semantic versioning, dependency resolution, lockfile management, and a searchable catalog.</li>
       <li><strong>prompttools-core</strong> &mdash; Shared foundation library providing prompt parsing, tokenization, model profiles, configuration, and caching.</li>
     </ul>
     <p>These are development tools &mdash; they do not execute prompts, connect to AI services, or send data to external servers. promptfmt and promptlint's <code>--fix</code> flag modify files only when explicitly requested.</p>
@@ -82,7 +84,13 @@
     <h3>5.5 Test Framework Limitations</h3>
     <p>prompttest validates prompts against user-defined assertions. Passing all tests does not guarantee prompt correctness, safety, or fitness for purpose. Test coverage is only as good as the assertions you write.</p>
 
-    <h3>5.6 Auto-Fix Risk</h3>
+    <h3>5.6 Diff Analysis Limitations</h3>
+    <p>promptdiff classifies changes as breaking or non-breaking based on heuristic analysis. It may not detect all breaking changes in all contexts. A change classified as non-breaking may still affect prompt behavior in ways that pattern-based analysis cannot predict.</p>
+
+    <h3>5.7 Registry and Versioning Limitations</h3>
+    <p>promptvault manages prompt packages in a local file-system registry. Lockfile integrity checking uses content hashing but does not guarantee that prompt packages are safe, correct, or free of issues. Dependency resolution follows semver conventions but cannot verify semantic compatibility between prompt versions.</p>
+
+    <h3>5.8 Auto-Fix Risk</h3>
     <p>The <code>--fix</code> flag in promptlint automatically modifies prompt files. While fixes target specific, well-defined issues (trailing whitespace, formatting), any automated file modification carries risk. Always review changes after using <code>--fix</code> and use version control.</p>
 
     <h2>6. Limitation of Liability</h2>
