@@ -1,0 +1,326 @@
+sprint: 1
+title: "promptdiff-ai: Verify, harden, and ship the complete package"
+source: "packages/promptdiff/README.md"
+created: "2026-03-25"
+scope: large
+
+# ───────────────────────────────────────────────────────────────────
+# CURRENT STATE
+# ───────────────────────────────────────────────────────────────────
+# The promptdiff package already has a complete implementation:
+#   - models.py: 7 Pydantic v2 models (ChangeStatus, MessageDiff,
+#     VariableDiff, MetadataDiff, TokenDelta, BreakingChange, PromptDiff)
+#   - differ.py: Core diff engine (diff_files, diff_messages,
+#     diff_variables, diff_metadata, compute_token_delta)
+#   - analyzer.py: Breaking change analyzer (4 checker functions)
+#   - reporter.py: 3 output formatters (text, JSON, markdown)
+#   - cli.py: Typer CLI with all PRD flags
+#   - pyproject.toml: Fully configured
+#   - 102 tests across 5 test files
+#
+# This sprint focuses on VERIFYING everything works end-to-end,
+# filling any test gaps, and hardening for release.
+# ───────────────────────────────────────────────────────────────────
+
+dependencies:
+  - "prompttools-core-ai>=1.0 must be installed (provides parse_file, PromptFile, Tokenizer, count_tokens, Message)"
+  - "tiktoken must be available (transitive dep via prompttools-core)"
+
+deliverables:
+  # ── 1. PYPROJECT.TOML ──────────────────────────────────────────
+  - file: "packages/promptdiff/pyproject.toml"
+    description: "Package metadata and build configuration for promptdiff-ai."
+    action: modify
+    acceptance:
+      - "name is 'promptdiff-ai'"
+      - "version is '1.0.0'"
+      - "requires-python is '>=3.9'"
+      - "dependencies include prompttools-core-ai>=1.0,<2.0"
+      - "dependencies include typer[all]>=0.12"
+      - "dependencies include rich>=13.0"
+      - "[project.scripts] maps 'promptdiff' to 'promptdiff.cli:app'"
+      - "[tool.hatch.build.targets.wheel] packages points to 'src/promptdiff'"
+      - "dev extras include pytest>=8.0, pytest-cov, ruff, mypy"
+      - "Development Status classifier is '4 - Beta' (not Alpha)"
+      - "Homepage and Repository URLs point to prompttools monorepo, not standalone repo"
+
+  # ── 2. DATA MODELS ─────────────────────────────────────────────
+  - file: "packages/promptdiff/src/promptdiff/models.py"
+    description: "Pydantic v2 data models for all diff structures."
+    action: modify
+    acceptance:
+      - "ChangeStatus enum has exactly 4 values: added, removed, modified, unchanged"
+      - "ChangeStatus is a str Enum (isinstance check passes)"
+      - "MessageDiff has fields: status, role, old_content, new_content, content_diff, token_delta, changes"
+      - "MessageDiff.old_content and new_content default to None"
+      - "MessageDiff.token_delta defaults to 0"
+      - "MessageDiff.changes defaults to empty list"
+      - "VariableDiff has fields: name, status, old_default, new_default, is_breaking"
+      - "VariableDiff.is_breaking defaults to False"
+      - "MetadataDiff has fields: key, status, old_value, new_value"
+      - "TokenDelta has fields: old_total, new_total, delta, percent_change"
+      - "BreakingChange has fields: category, description, severity"
+      - "PromptDiff has fields: file_path, old_hash, new_hash, message_diffs, variable_diffs, metadata_diffs, token_delta, breaking_changes"
+      - "PromptDiff.is_breaking is a computed_field that returns True when breaking_changes is non-empty"
+      - "All models use Pydantic v2 BaseModel (not v1)"
+      - "PromptDiff roundtrips through model_dump_json() and model_validate_json()"
+
+  # ── 3. CORE DIFF ENGINE ────────────────────────────────────────
+  - file: "packages/promptdiff/src/promptdiff/differ.py"
+    description: "Core diff engine that compares two prompt files and produces structured diffs."
+    action: modify
+    acceptance:
+      - "diff_files(old_path, new_path) parses both files via prompttools_core.parse_file() and returns a PromptDiff"
+      - "diff_files() raises FileNotFoundError when a file does not exist"
+      - "diff_files() accepts an optional encoding parameter (default: cl100k_base)"
+      - "diff_messages() aligns messages by role and position-within-role"
+      - "diff_messages() returns ADDED status for messages only in new"
+      - "diff_messages() returns REMOVED status for messages only in old"
+      - "diff_messages() returns MODIFIED status when content differs"
+      - "diff_messages() returns UNCHANGED status when content is identical"
+      - "diff_messages() produces a unified diff string in content_diff for modified messages"
+      - "diff_messages() computes per-message token_delta for added, removed, and modified messages"
+      - "diff_messages() handles multiple messages with the same role (positional matching)"
+      - "diff_messages() handles empty message lists for both old and new"
+      - "diff_variables() detects added, removed, modified, and unchanged variables"
+      - "diff_variables() marks added variables without defaults as is_breaking=True"
+      - "diff_variables() marks added variables with defaults as is_breaking=False"
+      - "diff_variables() marks removed variables as is_breaking=True"
+      - "diff_metadata() detects added, removed, modified, and unchanged metadata keys"
+      - "compute_token_delta() returns a TokenDelta with correct old_total, new_total, delta, and percent_change"
+      - "compute_token_delta() handles zero old_total without division-by-zero"
+
+  # ── 4. BREAKING CHANGE ANALYZER ────────────────────────────────
+  - file: "packages/promptdiff/src/promptdiff/analyzer.py"
+    description: "Classifies prompt changes by severity and breaking impact."
+    action: modify
+    acceptance:
+      - "analyze_breaking_changes() returns empty list when no breaking changes exist"
+      - "Removed variable produces a high-severity breaking change"
+      - "New required variable (no default) produces a high-severity breaking change"
+      - "New variable with default does NOT produce a breaking change"
+      - "Removed message produces a high-severity breaking change"
+      - "Added message does NOT produce a breaking change"
+      - "Modified message content does NOT produce a breaking change"
+      - "Model metadata change produces a medium-severity breaking change"
+      - "Model metadata removal produces a medium-severity breaking change"
+      - "Non-model metadata changes (temperature, etc.) do NOT produce breaking changes"
+      - "Role ordering changes produce a medium-severity breaking change when common roles are reordered"
+      - "Results are sorted by severity: high first, then medium, then low"
+      - "Multiple breaking changes from different categories are all returned"
+
+  # ── 5. OUTPUT REPORTERS ────────────────────────────────────────
+  - file: "packages/promptdiff/src/promptdiff/reporter.py"
+    description: "Formats PromptDiff results as text (Rich), JSON, or Markdown."
+    action: modify
+    acceptance:
+      - "format_json() returns valid JSON that can be parsed by json.loads()"
+      - "format_json() output contains all top-level PromptDiff fields including is_breaking"
+      - "format_json() uses model_dump_json() with indent=2"
+      - "format_text() includes file path in output"
+      - "format_text() includes truncated hashes (12 chars)"
+      - "format_text() shows 'BREAKING CHANGES (N):' header when breaking changes exist"
+      - "format_text() shows 'No breaking changes detected.' when none exist"
+      - "format_text() shows token delta with old -> new (delta, percent) format"
+      - "format_text() shows changed messages with status markers (+, -, ~)"
+      - "format_text() shows variable changes with BREAKING tag where applicable"
+      - "format_text() shows metadata changes"
+      - "format_text() supports show_token_detail parameter for per-message token breakdowns"
+      - "format_text() includes Rich markup for colored output (green, red, yellow)"
+      - "format_text() shows content diff lines with color coding for modified messages"
+      - "format_markdown() starts with '## Prompt Diff:' header"
+      - "format_markdown() includes token delta as a Markdown table with | Old | New | Delta | Change | headers"
+      - "format_markdown() includes breaking changes section with severity badges (**HIGH**, MEDIUM)"
+      - "format_markdown() includes code diff blocks with ```diff``` fencing"
+      - "format_markdown() shows 'No breaking changes detected.' when none exist"
+
+  # ── 6. CLI ─────────────────────────────────────────────────────
+  - file: "packages/promptdiff/src/promptdiff/cli.py"
+    description: "Typer CLI entry point for promptdiff."
+    action: modify
+    acceptance:
+      - "app is a typer.Typer instance with name='promptdiff'"
+      - "Main command accepts two positional arguments: FILE_A (old) and FILE_B (new)"
+      - "--format / -f option accepts text, json, markdown (default: text)"
+      - "--exit-on-breaking flag causes exit code 1 when breaking changes are found"
+      - "--exit-on-breaking with no breaking changes exits with code 0"
+      - "--token-detail flag is passed through to format_text()"
+      - "--encoding / -e option accepts a tiktoken encoding name (default: cl100k_base)"
+      - "--version / -V prints version and exits"
+      - "No arguments shows help text (no_args_is_help=True)"
+      - "File not found exits with code 2 and prints error to stderr"
+      - "JSON output uses print() not console.print() to avoid ANSI codes"
+
+  # ── 7. __init__.py ─────────────────────────────────────────────
+  - file: "packages/promptdiff/src/promptdiff/__init__.py"
+    description: "Public API surface with convenience imports."
+    action: modify
+    acceptance:
+      - "__version__ is '1.0.0'"
+      - "Exports all 7 model classes: BreakingChange, ChangeStatus, MessageDiff, MetadataDiff, PromptDiff, TokenDelta, VariableDiff"
+      - "Exports all 5 differ functions: compute_token_delta, diff_files, diff_messages, diff_metadata, diff_variables"
+      - "Exports analyze_breaking_changes from analyzer"
+      - "Exports format_json, format_markdown, format_text from reporter"
+      - "__all__ list matches all exports"
+      - "'from promptdiff import diff_files, PromptDiff, format_text' works"
+
+  # ── 8. TEST: MODELS ────────────────────────────────────────────
+  - file: "packages/promptdiff/tests/test_models.py"
+    description: "Unit tests for all Pydantic data models."
+    action: modify
+    acceptance:
+      - "Minimum 20 test cases"
+      - "Tests all 4 ChangeStatus enum values"
+      - "Tests ChangeStatus is a str enum"
+      - "Tests MessageDiff for all 4 statuses (added, removed, modified, unchanged)"
+      - "Tests MessageDiff default values (None, 0, empty list)"
+      - "Tests MessageDiff serialization roundtrip via model_dump()/model_validate()"
+      - "Tests VariableDiff for added-with-default (not breaking) and added-without-default (breaking)"
+      - "Tests VariableDiff for removed and modified scenarios"
+      - "Tests MetadataDiff for added, removed, and modified scenarios"
+      - "Tests TokenDelta for positive, negative, and zero deltas"
+      - "Tests BreakingChange for high and medium severity"
+      - "Tests PromptDiff.is_breaking computed field returns True when breaking_changes non-empty"
+      - "Tests PromptDiff.is_breaking returns False when breaking_changes is empty"
+      - "Tests PromptDiff JSON roundtrip via model_dump_json()/model_validate_json()"
+
+  # ── 9. TEST: DIFFER ────────────────────────────────────────────
+  - file: "packages/promptdiff/tests/test_differ.py"
+    description: "Unit and integration tests for the diff engine."
+    action: modify
+    acceptance:
+      - "Minimum 20 test cases"
+      - "Tests diff_messages() with identical message lists"
+      - "Tests diff_messages() with added, removed, and modified messages"
+      - "Tests diff_messages() with empty old and empty new lists"
+      - "Tests diff_messages() with both lists empty"
+      - "Tests diff_messages() with multiple messages of the same role"
+      - "Tests diff_messages() produces unified diff content for modified messages"
+      - "Tests diff_messages() computes non-zero token_delta for modifications"
+      - "Tests diff_variables() with no changes"
+      - "Tests diff_variables() with added variable (no default = breaking)"
+      - "Tests diff_variables() with added variable (with default = not breaking)"
+      - "Tests diff_variables() with removed variable"
+      - "Tests diff_variables() with modified default"
+      - "Tests diff_variables() with empty inputs"
+      - "Tests diff_metadata() with no changes, added, removed, and modified keys"
+      - "Tests diff_metadata() with empty inputs"
+      - "Tests compute_token_delta() for same file (zero delta)"
+      - "Tests compute_token_delta() for increased and decreased tokens"
+      - "Tests diff_files() end-to-end with identical files"
+      - "Tests diff_files() end-to-end with modified files"
+      - "Tests diff_files() produces non-empty hashes"
+      - "Tests diff_files() raises FileNotFoundError for missing file"
+      - "Tests diff_files() populates breaking_changes list"
+
+  # ── 10. TEST: ANALYZER ─────────────────────────────────────────
+  - file: "packages/promptdiff/tests/test_analyzer.py"
+    description: "Unit tests for breaking change detection."
+    action: modify
+    acceptance:
+      - "Minimum 12 test cases"
+      - "Tests no changes returns empty list"
+      - "Tests removed variable produces high-severity breaking change"
+      - "Tests added required variable produces high-severity breaking change"
+      - "Tests added variable with default is NOT breaking"
+      - "Tests removed message is high-severity breaking"
+      - "Tests added message is NOT breaking"
+      - "Tests modified message is NOT breaking"
+      - "Tests model change is medium-severity breaking"
+      - "Tests model removal is medium-severity breaking"
+      - "Tests non-model metadata change is NOT breaking"
+      - "Tests role ordering change detection"
+      - "Tests severity sorting (high before medium)"
+      - "Tests multiple breaking changes from different categories"
+
+  # ── 11. TEST: REPORTER ─────────────────────────────────────────
+  - file: "packages/promptdiff/tests/test_reporter.py"
+    description: "Unit tests for all three output formatters."
+    action: modify
+    acceptance:
+      - "Minimum 18 test cases"
+      - "Tests format_json() returns valid JSON"
+      - "Tests format_json() contains all PromptDiff fields"
+      - "Tests format_json() includes is_breaking=True"
+      - "Tests format_json() message_diffs count is correct"
+      - "Tests format_json() breaking_changes count is correct"
+      - "Tests format_json() token_delta values are correct"
+      - "Tests format_text() contains file path"
+      - "Tests format_text() contains truncated hashes"
+      - "Tests format_text() shows BREAKING CHANGES header"
+      - "Tests format_text() shows 'No breaking changes' when clean"
+      - "Tests format_text() shows token delta"
+      - "Tests format_text() shows message, variable, and metadata changes"
+      - "Tests format_text() show_token_detail parameter"
+      - "Tests format_text() includes Rich color markup"
+      - "Tests format_markdown() starts with ## header"
+      - "Tests format_markdown() includes token delta table"
+      - "Tests format_markdown() includes severity badges"
+      - "Tests format_markdown() includes diff code blocks"
+      - "Tests format_markdown() shows 'No breaking changes' when clean"
+
+  # ── 12. TEST: CLI ──────────────────────────────────────────────
+  - file: "packages/promptdiff/tests/test_cli.py"
+    description: "End-to-end CLI tests using typer.testing.CliRunner."
+    action: modify
+    acceptance:
+      - "Minimum 12 test cases"
+      - "Tests text output (default format) exits 0 and contains 'Prompt Diff'"
+      - "Tests JSON output exits 0 and parses as valid JSON with message_diffs"
+      - "Tests markdown output exits 0 and contains '## Prompt Diff'"
+      - "Tests --exit-on-breaking exits 1 when breaking changes exist"
+      - "Tests --exit-on-breaking exits 0 when no breaking changes"
+      - "Tests --token-detail flag exits 0"
+      - "Tests file-not-found exits non-zero"
+      - "Tests no arguments shows help text"
+      - "Tests --version prints version string"
+      - "Tests JSON output includes breaking_changes and is_breaking fields"
+      - "Tests JSON output includes variable_diffs with expected variable names"
+      - "Tests JSON output includes metadata_diffs with model key"
+
+  # ── 13. TEST: CONFTEST ─────────────────────────────────────────
+  - file: "packages/promptdiff/tests/conftest.py"
+    description: "Shared pytest fixtures for promptdiff tests."
+    action: modify
+    acceptance:
+      - "Provides old_prompt_file fixture (YAML with model, defaults, messages, variables)"
+      - "Provides new_prompt_file fixture (modified version with model change, variable changes)"
+      - "Provides identical_prompt_file fixture (exact copy of old)"
+      - "Provides simple_old_msg and simple_new_msg fixtures (Message lists for unit tests)"
+      - "Provides sample_diff fixture (pre-built PromptDiff for reporter tests)"
+      - "All file fixtures use tmp_path for isolation"
+
+constraints:
+  - "Use Pydantic v2 BaseModel for all data classes (not v1 syntax)"
+  - "Use Typer for CLI with Rich console for terminal output (match promptcost/promptfmt pattern)"
+  - "Use hatchling as build backend (match existing pyproject.toml pattern)"
+  - "Source layout: src/promptdiff/ (not flat layout)"
+  - "All imports from prompttools-core use: from prompttools_core import ..."
+  - "All tests use pytest (no unittest)"
+  - "format_json() must use model_dump_json() to ensure computed fields are included"
+  - "JSON output from CLI must use print() not console.print() to avoid ANSI codes"
+  - "Token counting must use prompttools_core.Tokenizer and count_tokens"
+  - "Development Status classifier should be '4 - Beta' for release readiness"
+  - "Minimum 80 test cases total across all test files (currently at 102 -- do not regress)"
+
+notes: |
+  The promptdiff package is ALREADY IMPLEMENTED. All source files, CLI,
+  and tests exist and appear complete. This sprint is about:
+
+  1. VERIFICATION: Run pytest and confirm all 102 tests pass. Fix any failures.
+  2. GAP ANALYSIS: Compare implementation against PRD acceptance criteria above.
+     Fill any gaps found (missing edge cases, untested paths, etc.).
+  3. HARDENING:
+     - Confirm pyproject.toml URLs point to monorepo (not standalone repo)
+     - Confirm Development Status is Beta (currently Alpha)
+     - Confirm all exports in __init__.py match actual implementations
+  4. E2E TESTING: Invoke `promptdiff` CLI with real YAML files and verify:
+     - Text output is readable and correctly formatted
+     - JSON output is valid and complete
+     - Markdown output has proper GFM structure
+     - --exit-on-breaking returns correct exit codes
+     - --version shows version
+     - Error cases produce clean stderr output
+
+  The Builder should NOT rewrite files that are already correct.
+  Only modify files where acceptance criteria are not met.
