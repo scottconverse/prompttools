@@ -13,10 +13,10 @@ Test framework for LLM prompt files.
 ## Installation
 
 ```bash
-pip install prompttest
+pip install prompttest-ai
 ```
 
-**Dependencies:** prompttools-core >= 1.0, promptcost >= 1.0, typer >= 0.12, pyyaml >= 6.0, rich >= 13.0
+**Dependencies:** prompttools-core-ai >= 1.0, promptcost-ai >= 1.0, typer >= 0.12, pyyaml >= 6.0, rich >= 13.0
 
 ## CLI Commands
 
@@ -362,7 +362,7 @@ for r in results:
 ```yaml
 prompt-tests:
   script:
-    - pip install prompttest
+    - pip install prompttest-ai
     - prompttest run tests/ --format junit > report.xml
   artifacts:
     reports:

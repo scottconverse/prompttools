@@ -24,7 +24,7 @@ Static analysis tool for LLM prompts — treats prompts as code.
 ## Installation
 
 ```bash
-pip install promptlint
+pip install promptlint-ai
 ```
 
 ## Quick Start

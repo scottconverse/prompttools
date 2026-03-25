@@ -8,11 +8,11 @@ Last updated: 2026-03-24 (end of session)
 
 | Package | Version | Tests | E2E CLI | Status |
 |---------|---------|-------|---------|--------|
-| prompttools-core | 1.0.0 | 108 pass | N/A (library) | ✅ Ready |
-| promptlint | 0.3.0 | 168 pass | ✅ `check`, `rules` verified | ✅ Ready |
-| promptfmt | 1.0.0 | 48 pass | ✅ `format`, `--check`, `--diff` verified | ✅ Ready |
-| promptcost | 1.0.0 | 47 pass | ✅ `estimate`, `--compare`, `budget`, `models` verified | ✅ Ready |
-| prompttest | 1.0.0 | 137 pass | ✅ `run` (text/json/junit), `init`, fail cases verified | ✅ Ready |
+| prompttools-core-ai | 1.0.0 | 108 pass | N/A (library) | ✅ Ready |
+| promptlint-ai | 0.3.0 | 168 pass | ✅ `check`, `rules` verified | ✅ Ready |
+| promptfmt-ai | 1.0.0 | 48 pass | ✅ `format`, `--check`, `--diff` verified | ✅ Ready |
+| promptcost-ai | 1.0.0 | 47 pass | ✅ `estimate`, `--compare`, `budget`, `models` verified | ✅ Ready |
+| prompttest-ai | 1.0.0 | 137 pass | ✅ `run` (text/json/junit), `init`, fail cases verified | ✅ Ready |
 | Integration | — | 10 pass | — | ✅ Ready |
 | **TOTAL** | — | **518 pass** | **All CLIs verified** | ✅ |
 
@@ -62,8 +62,8 @@ Full 4-pass review was completed. Background agents applied fixes for:
 ## Architecture Notes
 
 - All packages use Pydantic v2, Typer CLI, Rich terminal output
-- prompttools-core is the shared dependency for all packages
-- promptlint v0.3.0 depends on prompttools-core>=1.0,<2.0
+- prompttools-core-ai is the shared dependency for all packages
+- promptlint-ai v0.3.0 depends on prompttools-core-ai>=1.0,<2.0
 - Config discovery walks up directory tree (like .gitignore)
 - 10+ built-in model profiles (GPT-4/4o/4o-mini, Claude-3/4, Gemini)
 - Plugin system for custom lint rules

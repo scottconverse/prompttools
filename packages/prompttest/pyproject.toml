@@ -19,8 +19,8 @@ classifiers = [
     "Topic :: Software Development :: Testing",
 ]
 dependencies = [
-    "prompttools-core>=1.0,<2.0",
-    "promptcost>=1.0,<2.0",
+    "prompttools-core-ai>=1.0,<2.0",
+    "promptcost-ai>=1.0,<2.0",
     "pydantic>=2.0",
     "typer[all]>=0.12",
     "pyyaml>=6.0",

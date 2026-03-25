@@ -26,11 +26,11 @@ Lint, format, test, and estimate costs for your LLM prompt files.
 Install individual packages as needed:
 
 ```bash
-pip install prompttools-core
-pip install promptfmt
-pip install promptcost
-pip install prompttest
-pip install promptlint
+pip install prompttools-core-ai
+pip install promptfmt-ai
+pip install promptcost-ai
+pip install prompttest-ai
+pip install promptlint-ai
 ```
 
 For development on the monorepo:

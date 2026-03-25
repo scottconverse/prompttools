@@ -20,10 +20,10 @@ Token budget and cost estimator for LLM prompts.
 ## Installation
 
 ```bash
-pip install promptcost
+pip install promptcost-ai
 ```
 
-**Dependencies:** prompttools-core >= 1.0, typer >= 0.12, rich >= 13.0
+**Dependencies:** prompttools-core-ai >= 1.0, typer >= 0.12, rich >= 13.0
 
 ## CLI Commands
 

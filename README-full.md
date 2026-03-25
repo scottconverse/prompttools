@@ -49,14 +49,14 @@ Template variables are detected in three syntaxes: `{{var}}` (Jinja), `{var}` (f
 ### Install Individual Packages
 
 ```bash
-pip install prompttools-core    # shared library (required by all tools)
-pip install promptfmt           # auto-formatter
-pip install promptcost          # cost estimator
-pip install prompttest          # test framework
-pip install promptlint          # linter
+pip install prompttools-core-ai    # shared library (required by all tools)
+pip install promptfmt-ai           # auto-formatter
+pip install promptcost-ai          # cost estimator
+pip install prompttest-ai          # test framework
+pip install promptlint-ai          # linter
 ```
 
-Each tool package depends on `prompttools-core` and will install it automatically.
+Each tool package depends on `prompttools-core-ai` and will install it automatically.
 
 ### Development Installation (Monorepo)
 
@@ -798,7 +798,7 @@ jobs:
 
       - name: Install tools
         run: |
-          pip install promptfmt promptcost prompttest
+          pip install promptfmt-ai promptcost-ai prompttest-ai
 
       - name: Check formatting
         run: promptfmt format prompts/ --check
@@ -823,7 +823,7 @@ jobs:
 prompt-quality:
   image: python:3.12
   before_script:
-    - pip install promptfmt promptcost prompttest
+    - pip install promptfmt-ai promptcost-ai prompttest-ai
   script:
     - promptfmt format prompts/ --check
     - promptcost budget prompts/ --limit 0.10 --model gpt-4o

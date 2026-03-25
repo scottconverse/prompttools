@@ -68,13 +68,13 @@ Template variables are detected in three syntaxes:
 Install Individual Packages
 ----------------------------
 
-    pip install prompttools-core
-    pip install promptfmt
-    pip install promptcost
-    pip install prompttest
-    pip install promptlint
+    pip install prompttools-core-ai
+    pip install promptfmt-ai
+    pip install promptcost-ai
+    pip install prompttest-ai
+    pip install promptlint-ai
 
-Each tool package depends on prompttools-core and will install it
+Each tool package depends on prompttools-core-ai and will install it
 automatically.
 
 Development Installation (Monorepo)
@@ -716,7 +716,7 @@ GitHub Actions
               python-version: '3.12'
 
           - name: Install tools
-            run: pip install promptfmt promptcost prompttest
+            run: pip install promptfmt-ai promptcost-ai prompttest-ai
 
           - name: Check formatting
             run: promptfmt format prompts/ --check
@@ -740,7 +740,7 @@ GitLab CI
     prompt-quality:
       image: python:3.12
       before_script:
-        - pip install promptfmt promptcost prompttest
+        - pip install promptfmt-ai promptcost-ai prompttest-ai
       script:
         - promptfmt format prompts/ --check
         - promptcost budget prompts/ --limit 0.10 --model gpt-4o

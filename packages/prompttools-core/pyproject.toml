@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "prompttools-core"
+name = "prompttools-core-ai"
 version = "1.0.0"
 description = "Shared foundation library for the prompttools suite"
 readme = "README.md"
@@ -34,6 +34,9 @@ dev = [
     "ruff",
     "mypy",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["prompttools_core"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -15,10 +15,10 @@ After formatting, promptfmt verifies **semantic equivalence** -- it re-parses th
 ## Installation
 
 ```bash
-pip install promptfmt
+pip install promptfmt-ai
 ```
 
-**Dependencies:** prompttools-core >= 1.0, typer >= 0.12, rich >= 13.0, watchfiles >= 0.21
+**Dependencies:** prompttools-core-ai >= 1.0, typer >= 0.12, rich >= 13.0, watchfiles >= 0.21
 
 ## CLI Commands
 
@@ -184,7 +184,7 @@ promptfmt format prompts/ --check || exit 1
 ```yaml
 check-prompt-format:
   script:
-    - pip install promptfmt
+    - pip install promptfmt-ai
     - promptfmt format prompts/ --check
 ```
 

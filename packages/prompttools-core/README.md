@@ -21,7 +21,7 @@ Shared foundation library for the prompttools suite.
 ## Installation
 
 ```bash
-pip install prompttools-core
+pip install prompttools-core-ai
 ```
 
 **Dependencies:** pydantic >= 2.0, pyyaml >= 6.0, tiktoken >= 0.7
