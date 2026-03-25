@@ -25,18 +25,23 @@ Each tool installs independently via pip, but they share a common foundation thr
 | [promptdiff](packages/promptdiff/) | 1.0.0 | Semantic diff for prompt changes — message-level diffs, variable impact, token deltas, breaking change detection |
 | [promptvault](packages/promptvault/) | 1.0.0 | Version control and registry for prompt assets — semantic versioning, dependency resolution, lockfiles, searchable catalog |
 
-## Installation
+## Quick Start — One Command
 
-Install individual packages as needed:
+Start with the linter. You'll feel the value in 30 seconds:
 
 ```bash
-pip install prompttools-core-ai
-pip install promptfmt-ai
-pip install promptcost-ai
-pip install prompttest-ai
 pip install promptlint-ai
-pip install promptdiff-ai
-pip install promptvault-ai
+promptlint check ./prompts/
+```
+
+Then add more tools as you need them:
+
+```bash
+pip install promptfmt-ai     # auto-format prompt files
+pip install prompttest-ai    # test prompts in CI
+pip install promptcost-ai    # estimate API costs
+pip install promptdiff-ai    # semantic diff in PRs
+pip install promptvault-ai   # version and package prompts
 ```
 
 For development on the monorepo:

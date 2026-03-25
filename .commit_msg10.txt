@@ -1,0 +1,10 @@
+Apply market positioning: gateway drug, promptvault sharpening
+
+Landing page: added Start Here section leading with promptlint,
+renamed Tools to Full Suite, sharpened promptvault copy to answer
+"why not just Git?", fixed CTA button text.
+
+README: restructured install section as progressive adoption path
+starting with promptlint, not a wall of 7 pip install commands.
+
+Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>

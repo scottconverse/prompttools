@@ -84,14 +84,31 @@
   <h1><span class="accent">prompt</span>tools</h1>
   <p class="tagline">Git-native CI tooling for prompt engineering.</p>
   <p class="subtitle">The repo-native prompt DevEx layer for AI product teams, OSS maintainers, and startups that keep prompts in version control.</p>
-  <a href="#quickstart" class="cta">Get Started</a>
+  <a href="#quickstart" class="cta">Start with promptlint</a>
 </header>
 
-<!-- Tools -->
+<!-- Start Here -->
+<section id="start">
+  <div class="container">
+    <h2 class="section-title">Start Here</h2>
+    <p class="section-desc">You don't need seven tools on day one. Start with one, feel the win, adopt more when you need them.</p>
+    <div class="card-grid">
+      <div class="card" style="border-color: var(--accent); border-width: 2px;">
+        <h3>promptlint &#8592; start here</h3>
+        <p>Run <code>pip install promptlint-ai</code> and lint your prompts in 30 seconds. Catches ambiguity, missing placeholders, security risks, and bloat. Add it to CI and never merge a bad prompt again.</p>
+        <span class="badge b-blue">34 rules</span>
+        <span class="badge b-green">auto-fix</span>
+        <span class="badge b-orange">zero config</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Full Suite -->
 <section id="tools">
   <div class="container">
-    <h2 class="section-title">Tools</h2>
-    <p class="section-desc">Seven focused packages that work standalone or together.</p>
+    <h2 class="section-title">The Full Suite</h2>
+    <p class="section-desc">Seven packages. Install only what you need. Each works standalone.</p>
     <div class="card-grid">
       <div class="card">
         <h3>promptlint</h3>
@@ -125,9 +142,10 @@
       </div>
       <div class="card">
         <h3>promptvault</h3>
-        <p>Version control and registry for prompt assets. Semantic versioning, dependency resolution, lockfiles, and a searchable catalog.</p>
+        <p>Git tracks files. promptvault tracks <em>prompt packages</em> &mdash; with semver, cross-prompt dependency resolution, lockfiles for reproducibility, and quality gates that block publish until lint+test pass.</p>
         <span class="badge b-purple">semver</span>
         <span class="badge b-pink">lockfiles</span>
+        <span class="badge b-green">quality gates</span>
       </div>
       <div class="card">
         <h3>prompttools-core</h3>
