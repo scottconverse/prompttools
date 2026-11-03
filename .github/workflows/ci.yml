@@ -14,7 +14,8 @@ jobs:
   # Docs-only changes start no CI run (docs get push, merge and publish only).
   changes:
     name: Detect code changes
-    runs-on: ubuntu-latest
+    # 24.04: GitHub has no Python 3.9 build for Ubuntu 26.04 (ubuntu-latest).
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
       contents: read
@@ -51,7 +52,8 @@ jobs:
 
   test:
     needs: changes
-    runs-on: ubuntu-latest
+    # 24.04: GitHub has no Python 3.9 build for Ubuntu 26.04 (ubuntu-latest).
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
