@@ -49,6 +49,8 @@ class PipelineNoHandoffRule(BasePipelineRule):
                 continue  # first stage doesn't need handoff
             if not stage.depends_on:
                 continue  # no declared dependency = no handoff expected
+            if stage.prompt_file is None:
+                continue  # stage file not loaded
 
             all_text = " ".join(
                 msg.content for msg in stage.prompt_file.messages
@@ -111,6 +113,8 @@ class PipelineContextGrowthRule(BasePipelineRule):
         stage_map = {s.name: s for s in pipeline.stages}
 
         for stage in pipeline.stages:
+            if stage.prompt_file is None:
+                continue  # stage file not loaded
             # Compute input tokens for this stage:
             # prompt_tokens + sum of expected_output_tokens from all depends_on
             prompt_tokens = stage.prompt_file.total_tokens or 0
@@ -203,6 +207,8 @@ class PipelineInconsistentPersonaRule(BasePipelineRule):
                 continue
             if prev_stage.persona.lower() == curr_stage.persona.lower():
                 continue
+            if curr_stage.prompt_file is None:
+                continue  # stage file not loaded
 
             # Persona changed -- check for transition language
             all_text = " ".join(

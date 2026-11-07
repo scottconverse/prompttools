@@ -545,13 +545,13 @@ def rules(
             "category": _category_for_rule(r.rule_id),
         })
 
-    for r in all_pipeline_rules:
+    for pr in all_pipeline_rules:
         rule_entries.append({
-            "rule_id": r.rule_id,
-            "name": r.name,
-            "severity": r.default_severity.value,
+            "rule_id": pr.rule_id,
+            "name": pr.name,
+            "severity": pr.default_severity.value,
             "fixable": False,
-            "category": _category_for_rule(r.rule_id),
+            "category": _category_for_rule(pr.rule_id),
         })
 
     # Sort by rule_id

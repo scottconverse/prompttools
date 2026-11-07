@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import typer
 import yaml
@@ -60,7 +60,7 @@ def init(
         )
         raise typer.Exit(code=1)
 
-    manifest_data = {
+    manifest_data: dict[str, Any] = {
         "name": name,
         "version": "0.1.0",
         "description": description,

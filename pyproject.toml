@@ -25,6 +25,8 @@ line-length = 100
 select = ["E4", "E7", "E9", "F"]
 
 [tool.mypy]
-python_version = "3.9"
+# No python_version: mypy checks against the Python that runs it (each CI matrix job).
 warn_return_any = true
 warn_unused_configs = true
+# Each package has its own tests/conftest.py; mypy cannot check them as one tree.
+exclude = ["/tests/"]

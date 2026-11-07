@@ -142,16 +142,16 @@ def format_text(diff: PromptDiff, show_token_detail: bool = False) -> str:
     meta_changes = [m for m in diff.metadata_diffs if m.status != ChangeStatus.UNCHANGED]
     if meta_changes:
         lines.append(f"[bold]Metadata ({len(meta_changes)} changed):[/bold]")
-        for md in meta_changes:
-            marker, color = _STATUS_STYLE[md.status]
-            lines.append(f"  {marker} [{color}]{md.key}[/{color}]")
-            if md.status == ChangeStatus.ADDED:
-                lines.append(f"      value: {md.new_value!r}")
-            elif md.status == ChangeStatus.REMOVED:
-                lines.append(f"      was: {md.old_value!r}")
-            elif md.status == ChangeStatus.MODIFIED:
+        for meta in meta_changes:
+            marker, color = _STATUS_STYLE[meta.status]
+            lines.append(f"  {marker} [{color}]{meta.key}[/{color}]")
+            if meta.status == ChangeStatus.ADDED:
+                lines.append(f"      value: {meta.new_value!r}")
+            elif meta.status == ChangeStatus.REMOVED:
+                lines.append(f"      was: {meta.old_value!r}")
+            elif meta.status == ChangeStatus.MODIFIED:
                 lines.append(
-                    f"      {md.old_value!r} -> {md.new_value!r}"
+                    f"      {meta.old_value!r} -> {meta.new_value!r}"
                 )
         lines.append("")
 
@@ -256,9 +256,9 @@ def format_markdown(diff: PromptDiff) -> str:
     if meta_changes:
         lines.append(f"### Metadata ({len(meta_changes)} changed)")
         lines.append("")
-        for md in meta_changes:
-            status_marker = _STATUS_EMOJI[md.status]
-            lines.append(f"- `{status_marker}` `{md.key}`: {md.status.value}")
+        for meta in meta_changes:
+            status_marker = _STATUS_EMOJI[meta.status]
+            lines.append(f"- `{status_marker}` `{meta.key}`: {meta.status.value}")
         lines.append("")
 
     return "\n".join(lines)

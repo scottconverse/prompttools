@@ -7,6 +7,7 @@ filters results based on configuration.
 from __future__ import annotations
 
 import importlib
+import importlib.util
 import pkgutil
 from pathlib import Path
 
@@ -296,6 +297,8 @@ def lint_pipeline(
 
     # Lint each stage individually
     for stage in pipeline.stages:
+        if stage.prompt_file is None:
+            continue  # stage file not loaded
         stage_violations = lint_file(stage.prompt_file, config, min_severity)
         all_violations.extend(stage_violations)
 
@@ -303,7 +306,7 @@ def lint_pipeline(
     cumulative: list[int] = []
     running_total = 0
     for stage in pipeline.stages:
-        stage_tokens = stage.prompt_file.total_tokens or 0
+        stage_tokens = (stage.prompt_file.total_tokens or 0) if stage.prompt_file else 0
         # Add expected output tokens from dependencies
         for dep_name in stage.depends_on:
             for other_stage in pipeline.stages:

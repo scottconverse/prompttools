@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 import yaml
 
 from prompttools_core.errors import ParseError
-from prompttools_core.models import Message, PromptFile, PromptFormat
+from prompttools_core.models import Message, MessageRole, PromptFile, PromptFormat
 from prompttools_core.formats._variables import extract_variables
 
 
@@ -62,7 +63,7 @@ def parse_yaml(path: Path, content: str) -> PromptFile:
             )
         msg_content = str(msg_raw.get("content", ""))
         line_start = role_line_indices[i] if i < len(role_line_indices) else 1
-        messages.append(Message(role=role, content=msg_content, line_start=line_start))
+        messages.append(Message(role=cast(MessageRole, role), content=msg_content, line_start=line_start))
 
     all_content = " ".join(m.content for m in messages)
     variables = extract_variables(all_content)

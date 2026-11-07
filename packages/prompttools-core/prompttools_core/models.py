@@ -13,6 +13,8 @@ from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field
 
+MessageRole = Literal["system", "user", "assistant", "tool"]
+
 
 class PromptFormat(str, Enum):
     """Supported prompt file formats."""
@@ -28,7 +30,7 @@ class Message(BaseModel):
 
     model_config = {"frozen": False}
 
-    role: Literal["system", "user", "assistant", "tool"] = Field(
+    role: MessageRole = Field(
         ..., description="Message role"
     )
     content: str = Field(..., description="The text content of the message")
