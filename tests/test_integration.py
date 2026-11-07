@@ -4,6 +4,8 @@ Exercises real interactions between prompttools-core, promptfmt, promptcost,
 and prompttest to verify the packages work together correctly.
 """
 
+from __future__ import annotations
+
 import pytest
 from pathlib import Path
 
