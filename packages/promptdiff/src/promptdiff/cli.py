@@ -6,10 +6,8 @@ and reporting differences in text, JSON, or Markdown format.
 
 from __future__ import annotations
 
-import sys
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console

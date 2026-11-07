@@ -5,8 +5,6 @@ Supports text (Rich terminal), JSON, and Markdown output formats.
 
 from __future__ import annotations
 
-import json
-from typing import Any
 
 from promptdiff.models import (
     ChangeStatus,
@@ -219,8 +217,8 @@ def format_markdown(diff: PromptDiff) -> str:
     pct_str = f"+{td.percent_change}%" if td.percent_change > 0 else f"{td.percent_change}%"
     lines.append("### Token Delta")
     lines.append("")
-    lines.append(f"| Old | New | Delta | Change |")
-    lines.append(f"|-----|-----|-------|--------|")
+    lines.append("| Old | New | Delta | Change |")
+    lines.append("|-----|-----|-------|--------|")
     lines.append(f"| {td.old_total} | {td.new_total} | {delta_str} | {pct_str} |")
     lines.append("")
 

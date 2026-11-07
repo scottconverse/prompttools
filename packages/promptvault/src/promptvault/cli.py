@@ -17,7 +17,6 @@ from promptvault.lockfile import (
     verify_lockfile,
     write_lockfile,
 )
-from promptvault.models import PackageManifest, QualityConfig
 from promptvault.registry import LocalRegistry, _read_manifest
 from promptvault.resolver import DependencyConflictError, resolve_dependencies
 

@@ -1,6 +1,5 @@
 """Tests for promptcost.budget."""
 
-import pytest
 from promptcost.budget import check_budget
 from promptcost.estimator import estimate_file
 

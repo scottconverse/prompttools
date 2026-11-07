@@ -5,12 +5,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
 import yaml
 from typer.testing import CliRunner
 
 from promptvault.cli import app
-from promptvault.registry import LocalRegistry
 
 runner = CliRunner()
 

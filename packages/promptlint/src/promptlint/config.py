@@ -15,7 +15,7 @@ from typing import Any
 import yaml
 
 from promptlint.models import LintConfig
-from prompttools_core.profiles import BUILTIN_PROFILES, get_profile
+from prompttools_core.profiles import get_profile
 
 _CONFIG_FILENAME = ".promptlint.yaml"
 

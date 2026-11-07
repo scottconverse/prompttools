@@ -24,7 +24,6 @@ from promptlint.core.engine import (
 from promptlint.core.fixer import apply_fixes
 from promptlint.core.parser import parse_file, parse_pipeline_manifest, parse_stdin
 from promptlint.core.reporter import report
-from promptlint.models import Severity
 
 # ---------------------------------------------------------------------------
 # App and console
@@ -530,7 +529,6 @@ def rules(
     ),
 ) -> None:
     """List all available lint rules."""
-    from promptlint.rules.base import BasePipelineRule, BaseRule
 
     all_file_rules = get_all_rules()
     all_pipeline_rules = get_all_pipeline_rules()

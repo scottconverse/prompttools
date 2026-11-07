@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
-from prompttest.models import AssertionResult, AssertionType, PromptTestReport, PromptTestStatus
+from prompttest.models import PromptTestReport
 from prompttest.reporter import format_json, format_junit, format_text
 
 

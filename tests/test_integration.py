@@ -11,21 +11,16 @@ from prompttools_core import (
     ParseError,
     PromptFile,
     Tokenizer,
-    count_tokens,
     find_config_file,
-    get_profile,
     list_profiles,
     load_config,
     parse_file,
 )
 from prompttools_core.parser import parse_stdin
-from promptfmt import FmtConfig, format_content, format_file, is_equivalent
+from promptfmt import FmtConfig, format_file, is_equivalent
 from promptcost import estimate_file
 from prompttest import (
-    PromptTestStatus,
-    load_test_suite,
     run_test_file,
-    run_test_suite,
 )
 
 
@@ -191,7 +186,7 @@ def test_format_preserves_cost(tmp_path: Path) -> None:
 
 def test_parse_then_test(tmp_path: Path) -> None:
     """Parse a prompt, run test assertions against it."""
-    prompt_path = _write_yaml(tmp_path, "tested.yaml", _YAML_PROMPT)
+    _write_yaml(tmp_path, "tested.yaml", _YAML_PROMPT)
 
     test_path = _write_test_yaml(
         tmp_path,
@@ -443,7 +438,7 @@ not_messages:
 
     # Test runner: a test file pointing at a broken prompt should produce
     # ERROR results, not crash
-    test_content = f"""\
+    test_content = """\
 suite: error_suite
 prompt: broken.yaml
 tests:

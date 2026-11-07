@@ -5,7 +5,6 @@ Delegates to prompttools-core for profile data.
 
 from __future__ import annotations
 
-from typing import Optional
 
 # Re-export from prompttools-core
 from prompttools_core.profiles import (  # noqa: F401

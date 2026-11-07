@@ -1,8 +1,6 @@
 """Tests for prompttools_core.plugins."""
 
-from pathlib import Path
 
-import pytest
 
 from prompttools_core.plugins import discover_plugins, load_plugin
 

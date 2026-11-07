@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
 from prompttools_core import Message, PromptFile, PromptFormat
 
 from prompttest.assertions import run_assertion

@@ -43,7 +43,6 @@ class PipelineNoHandoffRule(BasePipelineRule):
         self, pipeline: PromptPipeline, config: LintConfig
     ) -> list[LintViolation]:
         violations: list[LintViolation] = []
-        stage_names = {s.name for s in pipeline.stages}
 
         for i, stage in enumerate(pipeline.stages):
             if i == 0:

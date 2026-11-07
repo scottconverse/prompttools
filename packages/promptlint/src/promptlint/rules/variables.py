@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-from collections import Counter
 
 from promptlint.models import LintConfig, LintViolation, PromptFile, Severity
 from promptlint.rules.base import BaseRule

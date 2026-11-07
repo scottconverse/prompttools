@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-from prompttools_core import PromptFile, PromptFormat, ToolConfig, parse_file
+from prompttools_core import PromptFormat, parse_file
 from prompttools_core.parser import parse_stdin
 
 from promptfmt.equivalence import is_equivalent

@@ -9,7 +9,6 @@ from __future__ import annotations
 import importlib
 import pkgutil
 from pathlib import Path
-from typing import Any
 
 import promptlint.rules as _rules_pkg
 from promptlint.models import (

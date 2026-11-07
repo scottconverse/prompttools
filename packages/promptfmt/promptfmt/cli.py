@@ -4,14 +4,11 @@ from __future__ import annotations
 
 import difflib
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console
 from rich.syntax import Syntax
 
-from prompttools_core import parse_directory
-from prompttools_core.models import PromptFormat
 
 from promptfmt.formatter import FmtConfig, format_file
 

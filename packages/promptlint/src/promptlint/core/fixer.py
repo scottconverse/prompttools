@@ -9,7 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from promptlint.models import LintConfig, LintViolation, PromptFile
+from promptlint.models import LintViolation
 from promptlint.rules.base import BaseRule
 
 if TYPE_CHECKING:
@@ -80,9 +80,9 @@ def apply_fixes(
         try:
             if str(file_path) == "-":
                 # Cannot fix stdin content
-                summary_lines.append(f"  Skipped stdin (-): cannot write back fixes.")
+                summary_lines.append("  Skipped stdin (-): cannot write back fixes.")
                 continue
-            current_content = file_path.read_text(encoding="utf-8")
+            file_path.read_text(encoding="utf-8")
         except (OSError, IOError) as exc:
             summary_lines.append(f"  Skipped {file_path}: {exc}")
             continue

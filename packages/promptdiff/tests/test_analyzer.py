@@ -4,11 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 
 from promptdiff.analyzer import analyze_breaking_changes
 from promptdiff.models import (
-    BreakingChange,
     ChangeStatus,
     MessageDiff,
     MetadataDiff,
