@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "promptdiff-ai"
-version = "1.0.0"
+version = "1.0.1"
 description = "Semantic diff for LLM prompt changes"
 readme = "README.md"
 license = {text = "MIT"}

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "promptvault-ai"
-version = "1.0.0"
+version = "1.0.1"
 description = "Version control and registry for prompt assets"
 readme = "README.md"
 license = "MIT"

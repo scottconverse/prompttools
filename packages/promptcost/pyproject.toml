@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "promptcost-ai"
-version = "1.0.0"
+version = "1.0.1"
 description = "Token budget and cost estimator for LLM prompts"
 readme = "README.md"
 license = "MIT"

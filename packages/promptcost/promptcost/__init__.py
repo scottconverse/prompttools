@@ -14,7 +14,7 @@ from promptcost.comparator import compare_models
 from promptcost.projector import project_cost
 from promptcost.budget import check_budget
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 __all__ = [
     "BudgetResult",

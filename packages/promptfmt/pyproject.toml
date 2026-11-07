@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "promptfmt-ai"
-version = "1.0.0"
+version = "1.0.1"
 description = "Auto-formatter for LLM prompt files"
 readme = "README.md"
 license = "MIT"
