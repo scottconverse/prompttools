@@ -35,7 +35,8 @@ def _compute_integrity(directory: Path) -> str:
 def _load_index(index_path: Path) -> dict[str, dict]:
     """Load the catalog index from disk."""
     if index_path.exists():
-        return json.loads(index_path.read_text(encoding="utf-8"))
+        data: dict[str, dict] = json.loads(index_path.read_text(encoding="utf-8"))
+        return data
     return {}
 
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
-from prompttools_core import PromptFile, get_profile, list_profiles
+from prompttools_core import PromptFile, get_profile
 
 from promptcost.estimator import estimate_file
 from promptcost.models import CostComparison

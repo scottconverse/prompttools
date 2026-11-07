@@ -59,7 +59,7 @@ def _replace_in_text(text: str, target_style: str) -> str:
     def _replace_xml(m: re.Match) -> str:
         name = m.group(1)
         if name.lower() in _EXCLUDED_TAGS:
-            return m.group(0)
+            return str(m.group(0))
         return f"{open_d}{name}{close_d}"
 
     text = _JINJA_RE.sub(_replace_jinja, text)

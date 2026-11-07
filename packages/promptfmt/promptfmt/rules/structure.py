@@ -54,7 +54,7 @@ def apply_yaml(content: str, indent: int = 2, sort_keys: bool = True) -> str:
     if sort_keys:
         # Sort top-level keys with messages last
         priority = ["model", "name", "description", "defaults"]
-        sorted_data = _sort_dict(data, priority)
+        sorted_data: dict[Any, Any] = _sort_dict(data, priority)
 
         # Sort message objects: role before content
         if "messages" in sorted_data:
@@ -97,7 +97,7 @@ def apply_json(content: str, indent: int = 2, sort_keys: bool = True) -> str:
 
     if sort_keys:
         priority = ["model", "name", "description", "defaults"]
-        sorted_data = _sort_dict(data, priority)
+        sorted_data: dict[Any, Any] = _sort_dict(data, priority)
 
         if "messages" in sorted_data:
             messages = sorted_data["messages"]

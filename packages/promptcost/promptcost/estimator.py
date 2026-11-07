@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Optional
+from typing import Literal, Optional
 
 from prompttools_core import (
     ModelProfile,
@@ -28,7 +27,7 @@ def _estimate_output_tokens(
     prompt_file: PromptFile,
     profile: ModelProfile,
     explicit_output_tokens: Optional[int] = None,
-) -> tuple[int, str]:
+) -> tuple[int, Literal["explicit", "heuristic", "max"]]:
     """Estimate output tokens using the configured strategy.
 
     Returns (token_count, method).

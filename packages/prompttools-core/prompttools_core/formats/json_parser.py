@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from prompttools_core.errors import ParseError
-from prompttools_core.models import Message, PromptFile, PromptFormat
+from prompttools_core.models import Message, MessageRole, PromptFile, PromptFormat
 from prompttools_core.formats._variables import extract_variables
 
 
@@ -57,7 +57,7 @@ def parse_json(path: Path, content: str) -> PromptFile:
                     )
                 msg_content = str(msg_raw.get("content", ""))
                 messages.append(
-                    Message(role=role, content=msg_content, line_start=i + 1)
+                    Message(role=cast(MessageRole, role), content=msg_content, line_start=i + 1)
                 )
 
             all_content = " ".join(m.content for m in messages)

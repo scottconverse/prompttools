@@ -11,7 +11,6 @@ import importlib.util
 import logging
 import sys
 from pathlib import Path
-from typing import Any
 
 from prompttools_core.errors import PluginError
 

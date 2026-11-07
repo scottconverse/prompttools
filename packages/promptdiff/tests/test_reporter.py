@@ -8,13 +8,10 @@ from pathlib import Path
 import pytest
 
 from promptdiff.models import (
-    BreakingChange,
     ChangeStatus,
-    MessageDiff,
     MetadataDiff,
     PromptDiff,
     TokenDelta,
-    VariableDiff,
 )
 from promptdiff.reporter import format_json, format_markdown, format_text
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import typer
 import yaml
@@ -17,7 +17,6 @@ from promptvault.lockfile import (
     verify_lockfile,
     write_lockfile,
 )
-from promptvault.models import PackageManifest, QualityConfig
 from promptvault.registry import LocalRegistry, _read_manifest
 from promptvault.resolver import DependencyConflictError, resolve_dependencies
 
@@ -61,7 +60,7 @@ def init(
         )
         raise typer.Exit(code=1)
 
-    manifest_data = {
+    manifest_data: dict[str, Any] = {
         "name": name,
         "version": "0.1.0",
         "description": description,
