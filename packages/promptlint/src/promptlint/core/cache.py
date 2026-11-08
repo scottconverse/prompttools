@@ -6,10 +6,7 @@ function-based API for backward compatibility.
 
 from __future__ import annotations
 
-import hashlib
-import shutil
 from pathlib import Path
-from typing import Any
 
 from prompttools_core.cache import PromptCache
 

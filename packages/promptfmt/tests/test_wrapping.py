@@ -26,14 +26,12 @@ class TestLineWrapping:
         long_code = "x " * 100
         content = f"normal\n```\n{long_code}\n```\nnormal"
         result = apply(content, max_length=40)
-        lines = result.split("\n")
         # The code block line should remain intact
         assert long_code in result
 
     def test_url_lines_not_wrapped(self):
         """URL lines are never wrapped."""
         url_line = "https://example.com/very/long/path/that/exceeds/the/maximum/line/length/significantly"
-        content = f"See: {url_line}"
         # The line starts with "See:" not a URL, so let's test a pure URL line
         result = apply(url_line, max_length=40)
         assert result == url_line

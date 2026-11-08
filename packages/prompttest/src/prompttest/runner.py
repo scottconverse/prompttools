@@ -12,7 +12,7 @@ from typing import Optional
 
 import yaml
 
-from prompttools_core import PromptFile, parse_file
+from prompttools_core import parse_file
 from prompttools_core.errors import ParseError
 
 from prompttest.assertions import run_assertion

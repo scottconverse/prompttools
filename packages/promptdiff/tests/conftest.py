@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from prompttools_core.models import Message, PromptFile
+from prompttools_core.models import Message
 
 from promptdiff.models import (
     BreakingChange,

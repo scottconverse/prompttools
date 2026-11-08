@@ -1,6 +1,5 @@
 """Tests for prompttools_core.profiles."""
 
-import pytest
 
 from prompttools_core.models import ModelProfile
 from prompttools_core.profiles import (

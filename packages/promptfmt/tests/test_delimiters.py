@@ -59,7 +59,6 @@ class TestDelimiterNormalization:
         """Delimiters inside code blocks are not converted."""
         content = "hello\n```\n---\n===\n```\nworld"
         result = apply(content, style="###")
-        lines = result.split("\n")
         # The --- and === inside the code block should remain
         assert "---" in result
         assert "===" in result

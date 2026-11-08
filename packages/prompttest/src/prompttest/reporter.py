@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 from xml.etree.ElementTree import Element, SubElement, tostring
 
-from prompttest.models import AssertionResult, PromptTestReport, PromptTestStatus
+from prompttest.models import PromptTestReport
 
 
 def format_text(report: PromptTestReport) -> str:

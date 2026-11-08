@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from promptvault.models import PackageManifest, PromptEntry
+from promptvault.models import PackageManifest
 from promptvault.registry import LocalRegistry
 
 

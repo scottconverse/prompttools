@@ -81,7 +81,7 @@ class TestFixVariableNormalization:
         assert len(pl033) > 0
 
         rules = get_all_rules(config)
-        summary = apply_fixes(violations, rules, dry_run=False)
+        apply_fixes(violations, rules, dry_run=False)
         fixed = fp.read_text(encoding="utf-8")
         assert "{{name}}" in fixed
         assert "{{order_id}}" in fixed

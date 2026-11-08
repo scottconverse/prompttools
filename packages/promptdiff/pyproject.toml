@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "promptdiff-ai"
-version = "1.0.0"
+version = "1.0.1"
 description = "Semantic diff for LLM prompt changes"
 readme = "README.md"
 license = {text = "MIT"}
@@ -56,6 +56,10 @@ addopts = "-v --tb=short"
 [tool.ruff]
 target-version = "py39"
 line-length = 100
+
+[tool.ruff.lint]
+# Ruff\'s classic default rules, written out so a new ruff release cannot change them.
+select = ["E4", "E7", "E9", "F"]
 
 [tool.mypy]
 python_version = "3.9"

@@ -40,7 +40,7 @@ from prompttools_core.cache import PromptCache
 from prompttools_core.config import find_config_file, load_config
 from prompttools_core.plugins import discover_plugins, load_plugin
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 __all__ = [
     # Errors

@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
-import pytest
 from typer.testing import CliRunner
 
 from promptfmt.cli import app
@@ -66,7 +64,6 @@ class TestFormatSingleFile:
 
     def test_format_writes_content_back(self, tmp_path: Path):
         f = _write_prompt(tmp_path, "test.yaml", VALID_YAML)
-        original = f.read_text(encoding="utf-8")
         runner.invoke(app, ["format", str(f)])
         updated = f.read_text(encoding="utf-8")
         # File should be updated (trailing spaces removed at minimum)

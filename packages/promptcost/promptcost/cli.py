@@ -14,12 +14,11 @@ from prompttools_core import (
     list_profiles,
     parse_directory,
     parse_file,
-    parse_pipeline,
 )
 
 from promptcost.budget import check_budget
 from promptcost.comparator import compare_models
-from promptcost.estimator import estimate_file, estimate_pipeline
+from promptcost.estimator import estimate_file
 from promptcost.projector import project_cost
 
 app = typer.Typer(

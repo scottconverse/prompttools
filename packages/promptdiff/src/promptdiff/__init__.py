@@ -24,7 +24,7 @@ from promptdiff.differ import (
 from promptdiff.analyzer import analyze_breaking_changes
 from promptdiff.reporter import format_json, format_markdown, format_text
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 __all__ = [
     # Models

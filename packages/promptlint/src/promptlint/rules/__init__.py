@@ -6,7 +6,6 @@ convenient discovery by the lint engine.
 
 from __future__ import annotations
 
-from typing import Union
 
 from promptlint.rules.base import BasePipelineRule, BaseRule
 

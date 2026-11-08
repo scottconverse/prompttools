@@ -1,7 +1,5 @@
 """Tests for promptfmt.formatter."""
 
-import pytest
-from pathlib import Path
 
 from promptfmt.formatter import FmtConfig, format_file, format_content
 from prompttools_core import PromptFormat
